@@ -1,0 +1,82 @@
+{
+  "name": "my-electron-app",
+  "version": "1.0.0",
+  "description": "Avoid eye strain, stay focus.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "generate-icons": "node scripts/generate-icons.js",
+    "pack": "electron-builder --dir",
+    "build": "electron-builder -mw",
+    "build:mac": "electron-builder --mac",
+    "build:win": "electron-builder --win"
+  },
+  "author": "Sarl Studio",
+  "license": "ISC",
+  "build": {
+    "appId": "com.sarlstudio.breakreminder.app",
+    "productName": "Break Flow",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "**/*",
+      "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+      "public/icons/**/*",
+      "resources/**/*",
+      "sounds/**/*",
+      "*.js",
+      "*.html",
+      "*.css",
+      "node_modules/electron-log/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "public/icons/icon.icns",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "${productName}-Setup-${version}.${ext}",
+      "icon": "public/icons/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Break Flow"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "public/icons/icon.png",
+      "category": "Utility"
+    },
+    "publish": null
+  },
+  "devDependencies": {
+    "electron": "^33.2.1",
+    "electron-builder": "^24.13.3",
+    "png-to-ico": "^2.1.8",
+    "sharp": "^0.33.5"
+  },
+  "dependencies": {
+    "electron-log": "^5.2.3",
+    "electron-store": "^8.1.0",
+    "posthog-js": "^1.194.1",
+    "posthog-node": "^4.3.1"
+  }
+}

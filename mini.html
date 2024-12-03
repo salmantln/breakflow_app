@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Mini Timer</title>
+    <style>
+      .minimize-btn {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: none;
+        border: none;
+        color: #888;
+        cursor: pointer;
+        -webkit-app-region: no-drag;
+        padding: 2px 6px;
+        font-size: 16px;
+        outline: none;
+      }
+
+      .minimize-btn:hover {
+        color: white;
+      }
+
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #333;
+        color: white;
+        -webkit-app-region: drag;
+        cursor: pointer;
+      }
+      .mini-timer {
+        font-size: 24px;
+      }
+    </style>
+  </head>
+  <body>
+    <button class="minimize-btn" id="minimizeBtn">▼</button>
+    <div class="mini-timer" id="timer">20:00</div>
+    <!-- <script src="./preload.js"></script> -->
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        let time = 20 * 60;
+        let isRunning = false;
+        let defaultMinutes = 20;
+
+        window.electronAPI.onTimeSync((event, seconds) => {
+          const minutes = Math.floor(seconds / 60);
+          const secs = seconds % 60;
+          document.getElementById("timer").textContent = `${String(
+            minutes
+          ).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+          checkBreakTime(seconds);
+        });
+
+        function checkBreakTime(seconds) {
+          if (seconds === 50) {
+            window.electronAPI.notifyBreaktime();
+          }
+        }
+
+        document.getElementById("minimizeBtn").addEventListener("click", () => {
+          window.electronAPI.showMain();
+        });
+      });
+      // // const { ipcRenderer } = require("electron");
+
+      // let time = 20 * 60;
+      // let timerInterval;
+      // let isRunning = false;
+      // let defaultMinutes = 20;
+
+      // // ipcRenderer.on("sync-time", (event, newTime) => {
+      // //   console.log("New Timer", newTime);
+      // //   clearInterval(timerInterval);
+      // //   document.getElementById("timer").textContent = formatTime(newTime);
+      // // });
+
+      // window.electronAPI.onTimeSync((event, seconds) => {
+      //   const minutes = Math.floor(seconds / 60);
+      //   const secs = seconds % 60;
+      //   document.getElementById("timer").textContent = `${String(
+      //     minutes
+      //   ).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+      //   checkBreakTime(seconds);
+      // });
+
+      // function checkBreakTime(seconds) {
+      //   if (seconds === 50) {
+      //     window.electronAPI.notifyBreaktime();
+      //   }
+      // }
+
+      // function formatTime(seconds) {
+      //   const mins = Math.floor(seconds / 60);
+      //   const secs = seconds % 60;
+      //   return `${mins.toString().padStart(2, "0")}:${secs
+      //     .toString()
+      //     .padStart(2, "0")}`;
+      // }
+      // // ipcRenderer.on("sync-time", (event, newTime) => {
+      // //   console.log("Sync Timer: ", newTime);
+      // //   // time = newTime;
+      // //   updateDisplay(newTime);
+      // //   // Don't start a new interval if we're just syncing
+      // //   // Let the main window control the timing
+      // // });
+
+      // document.getElementById("minimizeBtn").addEventListener("click", () => {
+      //   ipcRenderer.send("show-main");
+      // });
+
+      // ipcRenderer.on("restart-timer", () => {
+      //   time = defaultMinutes * 60;
+      //   updateDisplay(time);
+      // });
+    </script>
+  </body>
+</html>
