@@ -58,7 +58,7 @@
         });
 
         function checkBreakTime(seconds) {
-          if (seconds === 50) {
+          if (seconds === 5) {
             window.electronAPI.notifyBreaktime();
           }
         }
@@ -67,57 +67,7 @@
           window.electronAPI.showMain();
         });
       });
-      // // const { ipcRenderer } = require("electron");
-
-      // let time = 20 * 60;
-      // let timerInterval;
-      // let isRunning = false;
-      // let defaultMinutes = 20;
-
-      // // ipcRenderer.on("sync-time", (event, newTime) => {
-      // //   console.log("New Timer", newTime);
-      // //   clearInterval(timerInterval);
-      // //   document.getElementById("timer").textContent = formatTime(newTime);
-      // // });
-
-      // window.electronAPI.onTimeSync((event, seconds) => {
-      //   const minutes = Math.floor(seconds / 60);
-      //   const secs = seconds % 60;
-      //   document.getElementById("timer").textContent = `${String(
-      //     minutes
-      //   ).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
-      //   checkBreakTime(seconds);
-      // });
-
-      // function checkBreakTime(seconds) {
-      //   if (seconds === 50) {
-      //     window.electronAPI.notifyBreaktime();
-      //   }
-      // }
-
-      // function formatTime(seconds) {
-      //   const mins = Math.floor(seconds / 60);
-      //   const secs = seconds % 60;
-      //   return `${mins.toString().padStart(2, "0")}:${secs
-      //     .toString()
-      //     .padStart(2, "0")}`;
-      // }
-      // // ipcRenderer.on("sync-time", (event, newTime) => {
-      // //   console.log("Sync Timer: ", newTime);
-      // //   // time = newTime;
-      // //   updateDisplay(newTime);
-      // //   // Don't start a new interval if we're just syncing
-      // //   // Let the main window control the timing
-      // // });
-
-      // document.getElementById("minimizeBtn").addEventListener("click", () => {
-      //   ipcRenderer.send("show-main");
-      // });
-
-      // ipcRenderer.on("restart-timer", () => {
-      //   time = defaultMinutes * 60;
-      //   updateDisplay(time);
-      // });
+    
     </script>
   </body>
 </html>

@@ -135,6 +135,11 @@ function createMainWindow() {
     }
   });
 
+  ipcMain.on("mainWindow-maximize", () => {
+    miniWindow.hide();
+    mainWindow.show();
+  });
+
   ipcMain.on("window-close", () => {
     mainWindow.close();
   });
@@ -295,9 +300,9 @@ ipcMain.on("skip-break", () => {
 // Sync time between windows
 ipcMain.on("timer-update", (event, time) => {
   console.log("Main.js Timer: ", time);
-  // if (miniWindow && !miniWindow.isDestroyed()) {
-  miniWindow.webContents.send("sync-time", time);
-  // }
+  if (miniWindow && !miniWindow.isDestroyed()) {
+    miniWindow.webContents.send("sync-time", time);
+  }
 });
 // ipcMain.on("time-update", (event, time) => {
 //   if (mainWindow && !mainWindow.isDestroyed()) {
@@ -354,8 +359,12 @@ ipcMain.on("break-end", () => {
 });
 
 ipcMain.on("show-main", () => {
-  miniWindow.hide();
-  mainWindow.show();
+  if (miniWindow && !miniWindow.isDestroyed()) {
+    miniWindow.hide();
+  }
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.show();
+  }
 });
 
 // Handle lock screen request

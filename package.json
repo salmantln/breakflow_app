@@ -1,5 +1,9 @@
 {
-  "name": "my-electron-app",
+  "name": "breakflow_app",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/salmantln/breakflow_app.git"
+  },
   "version": "1.0.0",
   "description": "Avoid eye strain, stay focus.",
   "main": "main.js",

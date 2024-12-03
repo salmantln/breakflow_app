@@ -61,6 +61,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
 
   minimizeWindow: () => ipcRenderer.send("window-minimize"),
   maximizeWindow: () => ipcRenderer.send("window-maximize"),
+  showMain: () => ipcRenderer.send("mainWindow-maximize"),
   closeWindow: () => ipcRenderer.send("window-close"),
 
   //cursor
