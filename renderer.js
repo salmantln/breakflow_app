@@ -60,17 +60,36 @@ document.addEventListener("DOMContentLoaded", () => {
   function updateDisplay(seconds) {
     const minutes = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    document.getElementById("timer-display").textContent = `${String(
-      minutes
-    ).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+    const newTime = `${String(minutes).padStart(2, "0")}:${String(
+      secs
+    ).padStart(2, "0")}`;
+    const display = document.getElementById("timer-display");
 
-    // Use consistent event name
-    // ipcRenderer.send("timer-update", seconds);
+    if (!display.children.length) {
+      display.innerHTML = newTime
+        .split("")
+        .map((char) => `<span class="timer-char">${char}</span>`)
+        .join("");
+    }
+
+    const chars = display.children;
+    newTime.split("").forEach((char, i) => {
+      if (chars[i].textContent !== char) {
+        const currentTop = parseInt(chars[i].style.top || "0");
+        chars[i].style.top = `${currentTop - 1}px`;
+        chars[i].style.opacity = "0";
+        chars[i].style.fontSize = "65px";
+
+        setTimeout(() => {
+          chars[i].textContent = char;
+          chars[i].style.top = "0px";
+          chars[i].style.opacity = "1";
+          chars[i].style.fontSize = "72px";
+        }, 200);
+      }
+    });
 
     window.electronAPI.updateTimer(seconds);
-
-    // checkBreakTime(seconds);
-
     if (seconds <= 0) {
       pauseTimer();
       window.electronAPI.startBreak();
@@ -162,6 +181,4 @@ document.addEventListener("DOMContentLoaded", () => {
       breakDuration: breakDuration,
     });
   });
-
- 
 });

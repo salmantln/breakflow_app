@@ -36,6 +36,12 @@
       .mini-timer {
         font-size: 24px;
       }
+
+      .timer-char {
+        /* display: inline-block;
+        position: relative; */
+        transition: opacity 400ms, font-size 300ms;
+      }
     </style>
   </head>
   <body>
@@ -51,9 +57,32 @@
         window.electronAPI.onTimeSync((event, seconds) => {
           const minutes = Math.floor(seconds / 60);
           const secs = seconds % 60;
-          document.getElementById("timer").textContent = `${String(
-            minutes
-          ).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+          const newTime = `${String(minutes).padStart(2, "0")}:${String(
+            secs
+          ).padStart(2, "0")}`;
+          const display = document.getElementById("timer");
+
+          if (!display.children.length) {
+            display.innerHTML = newTime
+              .split("")
+              .map((char) => `<span class="timer-char">${char}</span>`)
+              .join("");
+          }
+
+          const chars = display.children;
+          newTime.split("").forEach((char, i) => {
+            if (chars[i].textContent !== char) {
+              chars[i].style.opacity = "0";
+              chars[i].style.fontSize = "23px";
+
+              setTimeout(() => {
+                chars[i].textContent = char;
+                chars[i].style.opacity = "1";
+                chars[i].style.fontSize = "24px";
+              }, 200);
+            }
+          });
+
           checkBreakTime(seconds);
         });
 
@@ -67,7 +96,6 @@
           window.electronAPI.showMain();
         });
       });
-    
     </script>
   </body>
 </html>
