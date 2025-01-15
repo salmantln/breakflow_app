@@ -74,4 +74,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
   // Posthog
   trackEvent: (eventName, properties) =>
     ipcRenderer.send("track-event", { eventName, properties }),
+
+  platform: process.platform, // Add this line
 });

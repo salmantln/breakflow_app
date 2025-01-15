@@ -100,10 +100,11 @@ function createMainWindow() {
   mainWindow = new BrowserWindow({
     width: 700,
     height: 400,
-    // minWidth: 800,
-    // minHeight: 600,
     resizable: false,
-    frame: false, // Remove default window frame
+    frame: process.platform === 'darwin', // Use native frame for macOS
+    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
+    trafficLightPosition: { x: 10, y: 10 }, // Position traffic lights for macOS
+    backgroundColor: process.platform === 'darwin' ? 'transparent' : '#2f3136',
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: true,
@@ -116,24 +117,25 @@ function createMainWindow() {
   createMiniWindow();
 
   posthog.capture({
-    distinctId: "user_id", // You might want to generate/store a unique user ID
+    distinctId: "user_id",
     event: "app_started",
   });
 
-  // Window control handlers
-  ipcMain.on("window-minimize", () => {
-    // mainWindow.minimize();
-    mainWindow.hide();
-    miniWindow.show();
-  });
+  // Window control handlers - only needed for Windows
+  if (process.platform !== 'darwin') {
+    ipcMain.on("window-minimize", () => {
+      mainWindow.hide();
+      miniWindow.show();
+    });
 
-  ipcMain.on("window-maximize", () => {
-    if (mainWindow.isMaximized()) {
-      mainWindow.unmaximize();
-    } else {
-      mainWindow.maximize();
-    }
-  });
+    ipcMain.on("window-maximize", () => {
+      if (mainWindow.isMaximized()) {
+        mainWindow.unmaximize();
+      } else {
+        mainWindow.maximize();
+      }
+    });
+  }
 
   ipcMain.on("mainWindow-maximize", () => {
     miniWindow.hide();
@@ -143,7 +145,9 @@ function createMainWindow() {
   ipcMain.on("window-close", () => {
     mainWindow.close();
   });
+
   mainWindow.webContents.setBackgroundThrottling(false);
+
   // Update window close event
   mainWindow.on("close", (event) => {
     if (!isQuitting) {
@@ -151,6 +155,21 @@ function createMainWindow() {
       mainWindow.close();
     }
   });
+
+  // Handle macOS specific behaviors
+  if (process.platform === 'darwin') {
+    // Disable maximize on macOS since the app is fixed size
+    mainWindow.setMaximizable(false);
+    
+    // Optional: Handle macOS full-screen behavior
+    mainWindow.on('enter-full-screen', () => {
+      mainWindow.setResizable(true);
+    });
+
+    mainWindow.on('leave-full-screen', () => {
+      mainWindow.setResizable(false);
+    });
+  }
 }
 
 function createBreakOverlay() {
@@ -396,7 +415,7 @@ ipcMain.on("notify-breaktime", () => {
 let tray;
 app.whenReady().then(() => {
   createMainWindow();
-  tray = new Tray("./public/icons/icon.png");
+  tray = new Tray("./public/icons/icon-16x16.png");
   const contextMenu = Menu.buildFromTemplate([
     { label: "Settings", click: () => createSettingsWindow() },
     { type: "separator" },

@@ -25,11 +25,12 @@
       "buildResources": "build"
     },
     "files": [
-      "**/*",
       "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+      "**/*",
       "public/icons/**/*",
       "resources/**/*",
       "sounds/**/*",
+      "fonts/**/*",
       "*.js",
       "*.html",
       "*.css",
@@ -43,7 +44,16 @@
         "zip"
       ],
       "hardenedRuntime": true,
-      "gatekeeperAssess": false
+      "gatekeeperAssess": false,
+      "extraResources": [
+        {
+          "from": "fonts/",
+          "to": "fonts/",
+          "filter": [
+            "**/*"
+          ]
+        }
+      ]
     },
     "win": {
       "target": [

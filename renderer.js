@@ -14,6 +14,42 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
+  const isMac = window.electronAPI.platform === 'darwin';
+  if (isMac) {
+    // Remove titlebar for macOS
+    const titlebar = document.querySelector('.titlebar');
+    if (titlebar) {
+      titlebar.style.display = 'none';
+    }
+    
+    // Add darwin class to body for CSS targeting
+    document.body.classList.add('darwin');
+    
+    // Adjust app container padding
+    const appContainer = document.querySelector('.app-container');
+    if (appContainer) {
+      appContainer.style.paddingTop = '28px';
+      appContainer.style.webkitAppRegion = 'drag'; // Make draggable
+    }
+
+    // Make interactive elements not draggable
+    const nonDraggableElements = document.querySelectorAll('.nav-item, button, input, select, .controls, .settings-section');
+    nonDraggableElements.forEach(element => {
+      element.style.webkitAppRegion = 'no-drag';
+    });
+
+    // Hide all window control buttons
+    const windowControls = document.querySelectorAll('.window-control-button');
+    windowControls.forEach(control => {
+      control.style.display = 'none';
+    });
+  }
+
+  // const titlebar = document.querySelector('.titlebar');
+  // if (process.platform === 'darwin') {
+  //   titlebar.style.display = 'none';
+  // }
+
   minimizeBtn.addEventListener("click", () => {
     console.log("Minimize clicked");
     window.electronAPI.minimizeWindow();

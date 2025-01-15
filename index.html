@@ -1,64 +1,69 @@
 <!-- index.html -->
 <!DOCTYPE html>
 <html>
-  <head>
-    <!-- Add Heroicons -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/heroicons/2.0.18/solid/index.min.js"></script>
 
-    <meta charset="UTF-8" />
-    <title>Break Flow</title>
-    <style>
-      ::-webkit-scrollbar {
-        display: none;
-      }
-      #timer-display {
-        font-size: 72px;
-        font-weight: bold;
-        margin: 40px 0;
-        /* font-family: monospace; */
-        font-family: '-apple-system', 'Segoe UI', system-ui;
-  /* Enable rounded style where available */
-  -webkit-font-feature-settings: 'ss01';
-  font-feature-settings: 'ss01';
-        color: #ffffff;
-        display: flex;
-      }
+<head>
+  <!-- Add Heroicons -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/heroicons/2.0.18/solid/index.min.js"></script>
 
-      .timer-char {
-        /* display: inline-block;
+  <meta charset="UTF-8" />
+  <title>Break Flow</title>
+  <style>
+    ::-webkit-scrollbar {
+      display: none;
+    }
+
+    #timer-display {
+      font-size: 72px;
+      font-weight: bold;
+      margin: 40px 0;
+      /* font-family: monospace; */
+      font-family: '-apple-system', 'Segoe UI', system-ui;
+      /* Enable rounded style where available */
+      -webkit-font-feature-settings: 'ss01';
+      font-feature-settings: 'ss01';
+      color: #ffffff;
+      display: flex;
+    }
+
+    .timer-char {
+      /* display: inline-block;
         position: relative; */
-        transition: opacity 400ms, font-size 300ms;
-      }
+      transition: opacity 400ms, font-size 300ms;
+    }
 
-      .timer-char.tick {
-        /* transform: translateY(-2px) scale(1.1); */
-        /* opacity: 0.05; */
-        /* transition: opacity 400ms, font-size 400ms; */
-      }
-      button {
-        background: #3498db;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 5px;
-        margin: 0 10px;
-        cursor: pointer;
-        font-size: 16px;
-      }
+    .timer-char.tick {
+      /* transform: translateY(-2px) scale(1.1); */
+      /* opacity: 0.05; */
+      /* transition: opacity 400ms, font-size 400ms; */
+    }
 
-      button:hover {
-        background: #2980b9;
-      }
-      body {
-        margin: 0;
-        color: #ffffff;
-        display: flex;
-        flex-direction: column;
-        height: 100vh;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          sans-serif;
-      }
-      /* body {
+    button {
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      margin: 0 10px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background: #2980b9;
+    }
+
+    body {
+      margin: 0;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        sans-serif;
+    }
+
+    /* body {
         margin: 0;
         display: flex;
         height: 100vh;
@@ -66,553 +71,574 @@
           Oxygen, Ubuntu, Cantarell, sans-serif;
       } */
 
-      .sidebar {
-        width: 240px;
-        background: #2f3136;
-        color: #dcddde;
-        display: flex;
-        flex-direction: column;
-        border-right: 1px solid rgba(255, 255, 255, 0.1);
-      }
+    .sidebar {
+      width: 240px;
+      background: #2f3136;
+      color: #dcddde;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+    }
 
-      .main-content {
-        flex: 1;
-        background: #36393f;
-        position: relative;
-        overflow-y: auto;
-      }
+    .main-content {
+      flex: 1;
+      background: #36393f;
+      position: relative;
+      overflow-y: auto;
+    }
 
-      .nav-item {
-        padding: 8px 16px;
-        color: #dcddde;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        border-radius: 4px;
-        margin: 2px 8px;
-      }
+    .nav-item {
+      padding: 8px 16px;
+      color: #dcddde;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 4px;
+      margin: 2px 8px;
+    }
 
-      .nav-item:hover {
-        background: rgba(255, 255, 255, 0.05);
-      }
+    .nav-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
 
-      .nav-item.active {
-        background: rgba(255, 255, 255, 0.08);
-      }
+    .nav-item.active {
+      background: rgba(255, 255, 255, 0.08);
+    }
 
-      .nav-item svg {
-        width: 20px;
-        height: 20px;
-      }
+    .nav-item svg {
+      width: 20px;
+      height: 20px;
+    }
 
-      .content-container {
-        padding: 20px;
-      }
+    .content-container {
+      padding: 20px;
+    }
 
-      /* Timer styles */
-      .timer-view {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding-top: 40px;
-      }
+    /* Timer styles */
+    .timer-view {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 40px;
+    }
 
-      /* Settings styles */
-      .settings-view {
-        max-width: 800px;
-        margin: 0 auto;
-        display: none;
-      }
+    /* Settings styles */
+    .settings-view {
+      max-width: 800px;
+      margin: 0 auto;
+      display: none;
+    }
 
-      .settings-header {
-        font-size: 20px;
-        font-weight: 600;
-        color: #fff;
-        margin-bottom: 24px;
-      }
+    .settings-header {
+      font-size: 20px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 24px;
+    }
 
-      .settings-section {
-        background: #2f3136;
-        border-radius: 5px;
-        padding: 16px;
-        margin-bottom: 16px;
-      }
+    .settings-section {
+      background: #2f3136;
+      border-radius: 5px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
 
-      .main-content > div {
-        display: none; /* Hide all content by default */
-      }
+    .main-content>div {
+      display: none;
+      /* Hide all content by default */
+    }
 
-      .main-content > div.active {
-        display: block; /* Show only active content */
-      }
+    .main-content>div.active {
+      display: block;
+      /* Show only active content */
+    }
 
-      /* Titlebar */
-      .titlebar {
-        height: 38px;
-        background: #2f3136;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        -webkit-app-region: drag;
-        user-select: none;
-        border-bottom: 1px solid #202225;
-      }
+    /* Base titlebar */
+    .titlebar {
+      height: 38px;
+      background: #2f3136;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      -webkit-app-region: drag;
+      user-select: none;
+      border-bottom: 1px solid #202225;
+    }
 
-      .titlebar-title {
-        color: #dcddde;
-        font-size: 14px;
-        margin-left: 12px;
-      }
+    /* Title */
+    .titlebar-title {
+      color: #dcddde;
+      font-size: 14px;
+      margin-left: 12px;
+    }
 
-      .window-controls {
-        display: flex;
-        height: 100%;
-        -webkit-app-region: no-drag;
-      }
+    /* Windows controls */
+    .window-controls {
+      display: flex;
+      height: 100%;
+      -webkit-app-region: no-drag;
+    }
 
-      .window-control-button {
-        width: 46px;
-        height: 100%;
-        border: none;
-        background: transparent;
-        color: #dcddde;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: background-color 0.2s;
-      }
+    .window-control-button {
+      width: 46px;
+      height: 100%;
+      border: none;
+      background: transparent;
+      color: #dcddde;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
 
-      .window-control-button:hover {
-        background: rgba(255, 255, 255, 0.1);
-      }
+    .window-control-button:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
 
-      .window-control-button.close:hover {
-        background: #ed4245;
-      }
+    .window-control-button.close:hover {
+      background: #ed4245;
+    }
 
-      /* App container for your existing content */
-      .app-container {
-        display: flex;
-        flex: 1;
-        overflow: hidden;
-      }
+    /* macOS specific styles */
+    .darwin .titlebar {
+      height: 28px;
+      background-color: #2f3136 !important;
+      /* Force background color */
+      border-bottom: none;
+      position: relative;
+      z-index: 1000;
+    }
 
-      .color-options {
-        display: flex;
-        gap: 8px;
-        margin-top: 8px;
-      }
+    .darwin .titlebar-title {
+      font-size: 13px;
+      margin-left: 70px;
+      text-align: center;
+      flex: 1;
+      color: #dcddde;
+    }
 
-      .color-option {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        border: 2px solid transparent;
-        cursor: pointer;
-        transition: transform 0.2s;
-      }
+    /* Add this new style for macOS */
+    .darwin .app-container {
+      -webkit-app-region: drag;
+      /* Make the entire app draggable on macOS */
+      padding-top: 28px;
+    }
 
-      .color-option:hover {
-        transform: scale(1.1);
-      }
+    .darwin .window-controls {
+      display: none;
+    }
 
-      .color-option.active {
-        border-color: white;
-      }
+    .darwin .nav-item,
+    .darwin button,
+    .darwin input,
+    .darwin select,
+    .darwin .controls,
+    .darwin .settings-section {
+      -webkit-app-region: no-drag;
+    }
 
-      select {
-        background: #2f3136;
-        border: 1px solid #40444b;
-        color: #dcddde;
-        padding: 8px;
-        border-radius: 4px;
-        width: 200px;
-        margin-top: 8px;
-      }
+    .darwin .titlebar {
+      height: 28px;
+      background-color: #2f3136 !important;
+      border-bottom: none;
+      position: relative;
+      z-index: 1000;
+    }
 
-      /* Input field styling */
-      input[type="number"] {
-        background: #2f3136;
-        border: 1px solid #40444b;
-        color: #ffffff;
-        padding: 8px 12px;
-        border-radius: 6px;
-        font-size: 14px;
-        width: 120px;
-        transition: border-color 0.2s, background-color 0.2s;
-        outline: none;
-      }
+    /* Add this to handle any potential background inheritance issues */
+    body {
+      background-color: #2f3136;
+    }
 
-      /* Remove default number input arrows */
-      input[type="number"]::-webkit-inner-spin-button,
-      input[type="number"]::-webkit-outer-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-      }
+    .app-container {
+      padding-top: 0;
+      background-color: #36393f;
+    }
 
-      /* Hover state */
-      input[type="number"]:hover {
-        border-color: #5865f2;
-        background: #32353b;
-      }
+    .window-controls {
+      display: flex;
+      height: 100%;
+      -webkit-app-region: no-drag;
+    }
 
-      /* Focus state */
-      input[type="number"]:focus {
-        border-color: #5865f2;
-        background: #32353b;
-        box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.2);
-      }
+    .window-control-button {
+      width: 46px;
+      height: 100%;
+      border: none;
+      background: transparent;
+      color: #dcddde;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
 
-      .about-content {
-        text-align: center;
-        padding: 20px;
-      }
+    .window-control-button:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
 
-      .app-logo {
-        margin-bottom: 20px;
-      }
+    .window-control-button.close:hover {
+      background: #ed4245;
+    }
 
-      .version {
-        color: #72767d;
-        margin-bottom: 20px;
-      }
+    /* App container for your existing content */
+    .app-container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
 
-      .description {
-        max-width: 600px;
-        margin: 0 auto 40px;
-        line-height: 1.6;
-      }
+    .color-options {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
 
-      .feature-list {
-        text-align: left;
-        max-width: 400px;
-        margin: 0 auto 40px;
-      }
+    .color-option {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
 
-      .feature-list ul {
-        list-style-type: none;
-        padding: 0;
-      }
+    .color-option:hover {
+      transform: scale(1.1);
+    }
 
-      .feature-list li {
-        margin: 10px 0;
-        padding-left: 24px;
-        position: relative;
-      }
+    .color-option.active {
+      border-color: white;
+    }
 
-      .feature-list li:before {
-        content: "✓";
-        position: absolute;
-        left: 0;
-        color: #43b581;
-      }
+    select {
+      background: #2f3136;
+      border: 1px solid #40444b;
+      color: #dcddde;
+      padding: 8px;
+      border-radius: 4px;
+      width: 200px;
+      margin-top: 8px;
+    }
 
-      .links {
-        display: flex;
-        gap: 16px;
-        justify-content: center;
-        margin-top: 32px;
-      }
+    /* Input field styling */
+    input[type="number"] {
+      background: #2f3136;
+      border: 1px solid #40444b;
+      color: #ffffff;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      width: 120px;
+      transition: border-color 0.2s, background-color 0.2s;
+      outline: none;
+    }
 
-      .link-button {
-        background: #5865f2;
-        color: white;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: background-color 0.2s;
-      }
+    /* Remove default number input arrows */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
 
-      .link-button:hover {
-        background: #4752c4;
-      }
+    /* Hover state */
+    input[type="number"]:hover {
+      border-color: #5865f2;
+      background: #32353b;
+    }
 
-      .credits {
-        margin: 32px 0;
-        color: #72767d;
-      }
-    </style>
+    /* Focus state */
+    input[type="number"]:focus {
+      border-color: #5865f2;
+      background: #32353b;
+      box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.2);
+    }
 
-    <!-- <link rel="stylesheet" href="./styles.css" /> -->
-  </head>
-  <body>
-    <div class="titlebar">
-      <div class="titlebar-title">Break Flow</div>
-      <div class="window-controls">
-        <button class="window-control-button" id="minimize-button">
-          <svg width="12" height="1" viewBox="0 0 12 1">
-            <rect width="12" height="1" fill="currentColor"></rect>
-          </svg>
-        </button>
-        <button class="window-control-button" id="maximize-button">
-          <svg width="12" height="12" viewBox="0 0 12 12">
-            <rect
-              width="10"
-              height="10"
-              x="1"
-              y="1"
-              fill="none"
-              stroke="currentColor"
-            ></rect>
-          </svg>
-        </button>
-        <button class="window-control-button close" id="close-button">
-          <svg width="12" height="12" viewBox="0 0 12 12">
-            <path
-              d="M1 1l10 10m0-10L1 11"
-              stroke="currentColor"
-              stroke-width="1.1"
-            ></path>
-          </svg>
-        </button>
+    .about-content {
+      text-align: center;
+      padding: 20px;
+    }
+
+    .app-logo {
+      margin-bottom: 20px;
+    }
+
+    .version {
+      color: #72767d;
+      margin-bottom: 20px;
+    }
+
+    .description {
+      max-width: 600px;
+      margin: 0 auto 40px;
+      line-height: 1.6;
+    }
+
+    .feature-list {
+      text-align: left;
+      max-width: 400px;
+      margin: 0 auto 40px;
+    }
+
+    .feature-list ul {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    .feature-list li {
+      margin: 10px 0;
+      padding-left: 24px;
+      position: relative;
+    }
+
+    .feature-list li:before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: #43b581;
+    }
+
+    .links {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      margin-top: 32px;
+    }
+
+    .link-button {
+      background: #5865f2;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .link-button:hover {
+      background: #4752c4;
+    }
+
+    .credits {
+      margin: 32px 0;
+      color: #72767d;
+    }
+  </style>
+
+  <!-- <link rel="stylesheet" href="./styles.css" /> -->
+</head>
+
+<body>
+  <!-- <div class="titlebar">
+    <div class="titlebar-title">Break Flow</div>
+    <div class="window-controls">
+      <button class="window-control-button" id="minimize-button">
+        <svg width="12" height="1" viewBox="0 0 12 1">
+          <rect width="12" height="1" fill="currentColor"></rect>
+        </svg>
+      </button>
+      <button class="window-control-button" id="maximize-button">
+        <svg width="12" height="12" viewBox="0 0 12 12">
+          <rect width="10" height="10" x="1" y="1" fill="none" stroke="currentColor"></rect>
+        </svg>
+      </button>
+      <button class="window-control-button close" id="close-button">
+        <svg width="12" height="12" viewBox="0 0 12 12">
+          <path d="M1 1l10 10m0-10L1 11" stroke="currentColor" stroke-width="1.1"></path>
+        </svg>
+      </button>
+    </div>
+  </div> -->
+  <div class="titlebar">
+    <!-- Add drag region for macOS -->
+    <div class="titlebar-drag-region"></div>
+    <div class="titlebar-title">Break Flow</div>
+    <!-- Windows controls -->
+    <div class="window-controls">
+      <button class="window-control-button" id="minimize-button">
+        <svg width="12" height="1" viewBox="0 0 12 1">
+          <rect width="12" height="1" fill="currentColor"></rect>
+        </svg>
+      </button>
+      <button class="window-control-button" id="maximize-button">
+        <svg width="12" height="12" viewBox="0 0 12 12">
+          <rect width="10" height="10" x="1" y="1" fill="none" stroke="currentColor"></rect>
+        </svg>
+      </button>
+      <button class="window-control-button close" id="close-button">
+        <svg width="12" height="12" viewBox="0 0 12 12">
+          <path d="M1 1l10 10m0-10L1 11" stroke="currentColor" stroke-width="1.1"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+  <div class="app-container">
+    <div class="sidebar">
+      <div class="nav-item active" data-view="timer">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>Timer</span>
+      </div>
+      <div class="nav-item" data-view="settings">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        <span>Settings</span>
+      </div>
+      <div class="nav-item" data-view="Customization">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="{1.5}"
+          stroke="currentColor" className="size-6">
+          <path strokeLinecap="round" stroke-width="1.5" strokeLinejoin="round"
+            d="M9.53 16.122a3 3 0 0 0-5.78 1.128 2.25 2.25 0 0 1-2.4 2.245 4.5 4.5 0 0 0 8.4-2.245c0-.399-.078-.78-.22-1.128Zm0 0a15.998 15.998 0 0 0 3.388-1.62m-5.043-.025a15.994 15.994 0 0 1 1.622-3.395m3.42 3.42a15.995 15.995 0 0 0 4.764-4.648l3.876-5.814a1.151 1.151 0 0 0-1.597-1.597L14.146 6.32a15.996 15.996 0 0 0-4.649 4.763m3.42 3.42a6.776 6.776 0 0 0-3.42-3.42" />
+        </svg>
+
+        <span>Customization</span>
+      </div>
+      <div class="nav-item" data-view="About Break Flow">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="{1.5}"
+          stroke="currentColor" className="size-6" stroke-width="1.5">
+          <path strokeLinecap="round" strokeLinejoin="round"
+            d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
+        </svg>
+
+        <span>About Break Flow</span>
       </div>
     </div>
-    <div class="app-container">
-      <div class="sidebar">
-        <div class="nav-item active" data-view="timer">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="1.5"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-          <span>Timer</span>
-        </div>
-        <div class="nav-item" data-view="settings">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="1.5"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"
-            />
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-            />
-          </svg>
-          <span>Settings</span>
-        </div>
-        <div class="nav-item" data-view="Customization">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth="{1.5}"
-            stroke="currentColor"
-            className="size-6"
-          >
-            <path
-              strokeLinecap="round"
-              stroke-width="1.5"
-              strokeLinejoin="round"
-              d="M9.53 16.122a3 3 0 0 0-5.78 1.128 2.25 2.25 0 0 1-2.4 2.245 4.5 4.5 0 0 0 8.4-2.245c0-.399-.078-.78-.22-1.128Zm0 0a15.998 15.998 0 0 0 3.388-1.62m-5.043-.025a15.994 15.994 0 0 1 1.622-3.395m3.42 3.42a15.995 15.995 0 0 0 4.764-4.648l3.876-5.814a1.151 1.151 0 0 0-1.597-1.597L14.146 6.32a15.996 15.996 0 0 0-4.649 4.763m3.42 3.42a6.776 6.776 0 0 0-3.42-3.42"
-            />
-          </svg>
 
-          <span>Customization</span>
-        </div>
-        <div class="nav-item" data-view="About Break Flow">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth="{1.5}"
-            stroke="currentColor"
-            className="size-6"
-            stroke-width="1.5"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z"
-            />
-          </svg>
-
-          <span>About Break Flow</span>
+    <div class="main-content">
+      <div id="timer-view" class="content-container timer-view">
+        <div class="timer" id="timer-display">20:00</div>
+        <div class="controls">
+          <button onclick="startTimer()">Start</button>
+          <button onclick="pauseTimer()">Pause</button>
+          <button onclick="resetTimer()">Reset</button>
         </div>
       </div>
 
-      <div class="main-content">
-        <div id="timer-view" class="content-container timer-view">
-          <div class="timer" id="timer-display">20:00</div>
-          <div class="controls">
-            <button onclick="startTimer()">Start</button>
-            <button onclick="pauseTimer()">Pause</button>
-            <button onclick="resetTimer()">Reset</button>
+      <div id="settings-view" class="content-container settings-view">
+        <div class="settings-header">Settings</div>
+
+        <div class="settings-section">
+          <h3>Timer Settings</h3>
+          <div class="setting-item">
+            <label>Work Duration (minutes)</label>
+            <input type="number" id="minutesInput" value="20" min="1" max="999" class="time-input" />
+          </div>
+
+          <div class="setting-item">
+            <label>Break Duration (minutes)</label>
+            <input type="number" id="breakDuration" min="1" max="30" value="5" />
+          </div>
+        </div>
+      </div>
+
+      <div id="Customization-view" class="content-container customization-view">
+        <div class="settings-header">Customization</div>
+
+        <div class="settings-section">
+          <h3>Theme Settings</h3>
+          <div class="setting-item">
+            <label>Color Theme</label>
+            <select id="colorTheme" class="theme-select">
+              <option value="dark">Dark</option>
+              <option value="light">Light</option>
+              <option value="system">System</option>
+            </select>
+          </div>
+
+          <div class="setting-item">
+            <label>Accent Color</label>
+            <div class="color-options">
+              <button class="color-option" data-color="#7C3AED" style="background-color: #7c3aed"></button>
+              <button class="color-option" data-color="#2563EB" style="background-color: #2563eb"></button>
+              <button class="color-option" data-color="#DC2626" style="background-color: #dc2626"></button>
+              <button class="color-option" data-color="#059669" style="background-color: #059669"></button>
+            </div>
+          </div>
+
+          <div class="setting-item">
+            <label>Notification Sound</label>
+            <select id="notificationSound" class="sound-select">
+              <option value="bell">Bell</option>
+              <option value="chime">Chime</option>
+              <option value="ding">Ding</option>
+              <option value="none">None</option>
+            </select>
           </div>
         </div>
 
-        <div id="settings-view" class="content-container settings-view">
-          <div class="settings-header">Settings</div>
-
-          <div class="settings-section">
-            <h3>Timer Settings</h3>
-            <div class="setting-item">
-              <label>Work Duration (minutes)</label>
-              <input
-                type="number"
-                id="minutesInput"
-                value="20"
-                min="1"
-                max="999"
-                class="time-input"
-              />
-            </div>
-
-            <div class="setting-item">
-              <label>Break Duration (minutes)</label>
-              <input
-                type="number"
-                id="breakDuration"
-                min="1"
-                max="30"
-                value="5"
-              />
-            </div>
+        <div class="settings-section">
+          <h3>Break Screen</h3>
+          <div class="setting-item">
+            <label>Background Style</label>
+            <select id="breakBackground" class="background-select">
+              <option value="blur">Blur</option>
+              <option value="dim">Dim</option>
+              <option value="solid">Solid Color</option>
+            </select>
           </div>
         </div>
+      </div>
+      <!-- About Section -->
+      <div id="About Break Flow-view" class="content-container about-view">
+        <div class="settings-header">About Break Flow</div>
 
-        <div
-          id="Customization-view"
-          class="content-container customization-view"
-        >
-          <div class="settings-header">Customization</div>
+        <div class="settings-section">
+          <div class="about-content">
+            <div class="app-logo">
+              <img src="./public/icons/icon.png" alt="Break Flow Logo" width="64" height="64" />
+            </div>
+            <h2>Break Flow</h2>
+            <p class="version">Version 1.0.0</p>
+            <p class="description">
+              Break Flow is a simple yet powerful break reminder app that
+              helps you maintain a healthy work-life balance by encouraging
+              regular breaks.
+            </p>
 
-          <div class="settings-section">
-            <h3>Theme Settings</h3>
-            <div class="setting-item">
-              <label>Color Theme</label>
-              <select id="colorTheme" class="theme-select">
-                <option value="dark">Dark</option>
-                <option value="light">Light</option>
-                <option value="system">System</option>
-              </select>
+            <div class="feature-list">
+              <h3>Features</h3>
+              <ul>
+                <li>Customizable work and break durations</li>
+                <li>Smart break reminders</li>
+                <li>Multiple display support</li>
+                <li>Minimalist design</li>
+              </ul>
             </div>
 
-            <div class="setting-item">
-              <label>Accent Color</label>
-              <div class="color-options">
-                <button
-                  class="color-option"
-                  data-color="#7C3AED"
-                  style="background-color: #7c3aed"
-                ></button>
-                <button
-                  class="color-option"
-                  data-color="#2563EB"
-                  style="background-color: #2563eb"
-                ></button>
-                <button
-                  class="color-option"
-                  data-color="#DC2626"
-                  style="background-color: #dc2626"
-                ></button>
-                <button
-                  class="color-option"
-                  data-color="#059669"
-                  style="background-color: #059669"
-                ></button>
-              </div>
+            <div class="credits">
+              <h3>Credits</h3>
+              <p>Created with ❤️ By Sarl Studio</p>
+              <p>Icons by Heroicons</p>
             </div>
 
-            <div class="setting-item">
-              <label>Notification Sound</label>
-              <select id="notificationSound" class="sound-select">
-                <option value="bell">Bell</option>
-                <option value="chime">Chime</option>
-                <option value="ding">Ding</option>
-                <option value="none">None</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="settings-section">
-            <h3>Break Screen</h3>
-            <div class="setting-item">
-              <label>Background Style</label>
-              <select id="breakBackground" class="background-select">
-                <option value="blur">Blur</option>
-                <option value="dim">Dim</option>
-                <option value="solid">Solid Color</option>
-              </select>
-            </div>
-          </div>
-        </div>
-        <!-- About Section -->
-        <div id="About Break Flow-view" class="content-container about-view">
-          <div class="settings-header">About Break Flow</div>
-
-          <div class="settings-section">
-            <div class="about-content">
-              <div class="app-logo">
-                <img
-                  src="./public/icons/icon.png"
-                  alt="Break Flow Logo"
-                  width="64"
-                  height="64"
-                />
-              </div>
-              <h2>Break Flow</h2>
-              <p class="version">Version 1.0.0</p>
-              <p class="description">
-                Break Flow is a simple yet powerful break reminder app that
-                helps you maintain a healthy work-life balance by encouraging
-                regular breaks.
-              </p>
-
-              <div class="feature-list">
-                <h3>Features</h3>
-                <ul>
-                  <li>Customizable work and break durations</li>
-                  <li>Smart break reminders</li>
-                  <li>Multiple display support</li>
-                  <li>Minimalist design</li>
-                </ul>
-              </div>
-
-              <div class="credits">
-                <h3>Credits</h3>
-                <p>Created with ❤️ By Sarl Studio</p>
-                <p>Icons by Heroicons</p>
-              </div>
-
-              <div class="links">
-                <!-- <button
+            <div class="links">
+              <!-- <button
                   class="link-button"
                   onclick="window.electronAPI.openExternal('https://github.com/yourusername/break-flow')"
                 >
                   GitHub
                 </button> -->
-                <button
-                  class="link-button"
-                  onclick="window.electronAPI.openExternal('https://break-flow-landingpage.vercel.app/')"
-                >
-                  Website
-                </button>
-              </div>
+              <button class="link-button"
+                onclick="window.electronAPI.openExternal('https://break-flow-landingpage.vercel.app/')">
+                Website
+              </button>
             </div>
           </div>
         </div>
       </div>
     </div>
+  </div>
 
-    <script src="./renderer.js"></script>
-  </body>
+  <script src="./renderer.js"></script>
+</body>
+
 </html>
