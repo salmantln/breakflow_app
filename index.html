@@ -32,11 +32,7 @@
       transition: opacity 400ms, font-size 300ms;
     }
 
-    .timer-char.tick {
-      /* transform: translateY(-2px) scale(1.1); */
-      /* opacity: 0.05; */
-      /* transition: opacity 400ms, font-size 400ms; */
-    }
+
 
     button {
       background: #3498db;
@@ -175,8 +171,9 @@
 
     /* Windows controls */
     .window-controls {
-      display: flex;
+      /*display: flex;*/
       height: 100%;
+      margin-left: auto; /* This ensures the controls stay on the right */
       -webkit-app-region: no-drag;
     }
 
@@ -475,6 +472,7 @@
       </button>
     </div>
   </div>
+
   <div class="app-container">
     <div class="sidebar">
       <div class="nav-item active" data-view="timer">
