@@ -82,5 +82,9 @@
     "electron-store": "^8.1.0",
     "posthog-js": "^1.194.1",
     "posthog-node": "^4.3.1"
-  }
+  },
+  "bugs": {
+    "url": "https://github.com/salmantln/breakflow_app/issues"
+  },
+  "homepage": "https://github.com/salmantln/breakflow_app#readme"
 }
