@@ -102,7 +102,7 @@ function createMainWindow() {
     height: 400,
     // minWidth: 800,
     // minHeight: 600,
-    resizable: true,
+    resizable: false,
     frame: false, // Remove default window frame
     webPreferences: {
       nodeIntegration: true,
@@ -221,7 +221,7 @@ function createMiniWindow() {
     width: 200,
     height: 80,
     frame: false,
-    resizable: true,
+    resizable: false,
     show: false,
     alwaysOnTop: true,
     webPreferences: {
