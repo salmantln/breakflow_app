@@ -1,8 +1,4 @@
-// renderer.js (create this new file)
-
-// const { ipcRenderer } = require('electron')
-
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   // Get all navigation items and content sections
   const navItems = document.querySelectorAll(".nav-item");
   const contentSections = document.querySelectorAll(".content-container");
@@ -21,10 +17,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (titlebar) {
       titlebar.style.display = 'none';
     }
-    
+
     // Add darwin class to body for CSS targeting
     document.body.classList.add('darwin');
-    
+
     // Adjust app container padding
     const appContainer = document.querySelector('.app-container');
     if (appContainer) {
@@ -217,4 +213,18 @@ document.addEventListener("DOMContentLoaded", () => {
       breakDuration: breakDuration,
     });
   });
+
+  // const statusElement = document.getElementById('meeting-status');
+
+  // window.electronAPI.onMeetingStatus((isMeeting) => {
+  //     statusElement.innerText = isMeeting ? "In a meeting! 📞" : "No active meeting.";
+  //     statusElement.style.color = isMeeting ? "red" : "green";
+  // });
+
+  
+  
 });
+
+
+
+

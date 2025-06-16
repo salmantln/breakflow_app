@@ -1,6 +1,29 @@
 // preload.js
 const { contextBridge, ipcRenderer, shell } = require("electron");
 
+// Add this microphone check function
+async function checkMicrophone() {
+  try {
+    console.log("Checking microphone access in renderer...");
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    // If we got here, the microphone is available
+    stream.getTracks().forEach(track => track.stop());
+    console.log("Microphone is available (not in use)");
+    return false;
+  } catch (error) {
+    console.log("Microphone check error:", error.name);
+    if (error.name === 'NotReadableError' || error.name === 'AbortError') {
+      console.log("Microphone is in use - likely in a call");
+      return true; // Microphone is likely in use
+    } else {
+      
+      console.log("Microphone check inconclusive");
+      return null; // Inconclusive
+    }
+  }
+}
+
+// Expose the existing electronAPI
 contextBridge.exposeInMainWorld("electronAPI", {
   // Timer controls
   startBreak: () => ipcRenderer.send("start-break"),
@@ -17,7 +40,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
   onBreakEnd: (callback) => ipcRenderer.on("break-end", callback),
 
   // Window controls
-
   lockScreen: () => ipcRenderer.send("lock-screen"),
 
   // Progress updates
@@ -35,10 +57,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
   debug:
     process.env.NODE_ENV === "development"
       ? {
-          listenerCount: (channel) => ipcRenderer.listenerCount(channel),
-          removeAllListeners: (channel) =>
-            ipcRenderer.removeAllListeners(channel),
-        }
+        listenerCount: (channel) => ipcRenderer.listenerCount(channel),
+        removeAllListeners: (channel) =>
+          ipcRenderer.removeAllListeners(channel),
+      }
       : null,
 
   onTimerUpdate: (callback) => {
@@ -75,5 +97,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   trackEvent: (eventName, properties) =>
     ipcRenderer.send("track-event", { eventName, properties }),
 
-  platform: process.platform, // Add this line
+  platform: process.platform,
+
+  onMeetingStatus: (callback) => ipcRenderer.on('meeting-status', (_event, status) => callback(status))
 });

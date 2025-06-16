@@ -5,7 +5,7 @@
 <head>
   <!-- Add Heroicons -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/heroicons/2.0.18/solid/index.min.js"></script>
-
+  <script src="meeting-detector-renderer.js"></script>
   <meta charset="UTF-8" />
   <title>Break Flow</title>
   <style>
@@ -173,7 +173,8 @@
     .window-controls {
       /*display: flex;*/
       height: 100%;
-      margin-left: auto; /* This ensures the controls stay on the right */
+      margin-left: auto;
+      /* This ensures the controls stay on the right */
       -webkit-app-region: no-drag;
     }
 
@@ -518,6 +519,9 @@
           <button onclick="startTimer()">Start</button>
           <button onclick="pauseTimer()">Pause</button>
           <button onclick="resetTimer()">Reset</button>
+          <h1>Meeting Detection Status</h1>
+          <p id="status">Checking...</p>
+
         </div>
       </div>
 
@@ -636,7 +640,22 @@
     </div>
   </div>
 
+  <script>
+    const { ipcRenderer } = require("electron");
+
+    ipcRenderer.on("meeting-status", (event, data) => {
+      const statusElement = document.getElementById("status");
+      if (data.inMeeting) {
+        statusElement.innerHTML = `🔴 In a Meeting (${data.reason})`;
+        statusElement.style.color = "red";
+      } else {
+        statusElement.innerHTML = "🟢 Not in a Meeting";
+        statusElement.style.color = "green";
+      }
+    });
+  </script>
   <script src="./renderer.js"></script>
+  <script src="./meeting-detector-renderer.js"></script>
 </body>
 
 </html>

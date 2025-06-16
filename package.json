@@ -9,6 +9,7 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
+    "watch": "nodemon --exec electron .",
     "generate-icons": "node scripts/generate-icons.js",
     "pack": "electron-builder --dir",
     "build": "electron-builder -mw",
@@ -88,10 +89,17 @@
     "sharp": "^0.33.5"
   },
   "dependencies": {
+    "active-win": "^8.2.1",
     "electron-log": "^5.2.3",
     "electron-store": "^8.1.0",
+    "electron-util": "^0.18.1",
+    "get-windows": "^9.2.0",
+    "loudness": "^0.4.2",
+    "nodemon": "^3.1.9",
     "posthog-js": "^1.194.1",
-    "posthog-node": "^4.3.1"
+    "posthog-node": "^4.3.1",
+    "ps-list": "^8.1.1",
+    "systeminformation": "^5.25.11"
   },
   "bugs": {
     "url": "https://github.com/salmantln/breakflow_app/issues"
