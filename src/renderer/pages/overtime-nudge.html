@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .nudge {
+      background: linear-gradient(135deg, #e66465, #9198e5);
+      color: white;
+      padding: 14px 18px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1), 0 8px 24px rgba(0,0,0,0.15);
+      animation: slideIn 300ms cubic-bezier(0.23, 1, 0.32, 1);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .icon {
+      width: 32px;
+      height: 32px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .text {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .time {
+      font-size: 16px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .label {
+      font-size: 11px;
+      opacity: 0.75;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="nudge" id="nudge">
+    <div class="icon">&#9889;</div>
+    <div class="text">
+      <span class="time" id="overtime-time">0 minutes</span>
+      <span class="label">without a break</span>
+    </div>
+  </div>
+
+  <script>
+    async function updateTime() {
+      const info = await window.electronAPI.getOvertimeInfo();
+      const el = document.getElementById('overtime-time');
+      if (info && el) {
+        el.textContent = `${info.minutes} minute${info.minutes !== 1 ? 's' : ''}`;
+      }
+    }
+
+    updateTime();
+    setInterval(updateTime, 30000);
+
+    document.getElementById('nudge').addEventListener('click', () => {
+      window.electronAPI.dismissOvertimeNudge();
+    });
+  </script>
+</body>
+</html>

@@ -86,11 +86,48 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.body.classList.add(bgMap[bgStyle] || 'bg-calm-blue');
   }
 
+  // Break skip difficulty
+  const difficulty = settings.breakSkipDifficulty || 'casual';
+  let skipUnlocked = difficulty === 'casual';
+  let skipPauseTimer = null;
+
+  if (difficulty === 'hardcore') {
+    // No skip allowed — hide skip and delay buttons
+    if (skipButton) skipButton.style.display = 'none';
+    if (delay1Button) delay1Button.style.display = 'none';
+    if (delay5Button) delay5Button.style.display = 'none';
+  } else if (difficulty === 'balanced') {
+    // Skip only after a pause — show but disable
+    if (skipButton) {
+      skipButton.style.opacity = '0.4';
+      skipButton.style.pointerEvents = 'none';
+      skipButton.textContent = 'Skip (wait...)';
+    }
+    if (delay1Button) { delay1Button.style.opacity = '0.4'; delay1Button.style.pointerEvents = 'none'; }
+    if (delay5Button) { delay5Button.style.opacity = '0.4'; delay5Button.style.pointerEvents = 'none'; }
+    // Unlock after 10 seconds
+    skipPauseTimer = setTimeout(() => {
+      skipUnlocked = true;
+      if (skipButton) {
+        skipButton.style.opacity = '1';
+        skipButton.style.pointerEvents = 'auto';
+        skipButton.textContent = 'Skip';
+      }
+      if (delay1Button) { delay1Button.style.opacity = '1'; delay1Button.style.pointerEvents = 'auto'; }
+      if (delay5Button) { delay5Button.style.opacity = '1'; delay5Button.style.pointerEvents = 'auto'; }
+    }, 10000);
+  }
+
+  // End break early if nearly done
+  const earlyEndEnabled = settings.endBreakEarlyIfNearly || false;
+  const earlyEndThreshold = settings.endBreakEarlyThreshold || 10;
+
   let breakTimer;
   let timerInterval;
+  const totalBreakSeconds = (settings.breakDuration || 5) * 60;
 
   async function startBreakTimer() {
-    breakTimer = (settings.breakDuration || 5) * 60;
+    breakTimer = totalBreakSeconds;
     updateDisplay();
     if (settings.playSoundOnBreakStart !== false) {
       startSound.play().catch(() => {});
@@ -99,6 +136,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     timerInterval = setInterval(() => {
       breakTimer--;
       updateDisplay();
+
+      // Show "End early" button when nearly done
+      if (earlyEndEnabled && breakTimer <= earlyEndThreshold && breakTimer > 0) {
+        const earlyBtn = document.getElementById('end-early');
+        if (earlyBtn) earlyBtn.style.display = 'inline-flex';
+      }
 
       if (breakTimer <= 0) {
         if (settings.playSoundOnBreakEnd !== false) {
@@ -116,9 +159,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     const timeString = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
     timerDisplay.textContent = timeString;
 
-    const totalSeconds = (settings.breakDuration || 5) * 60;
     window.electronAPI.updateBreakProgress({
-      percent: (breakTimer / totalSeconds) * 100,
+      percent: (breakTimer / totalBreakSeconds) * 100,
       timeLeft: timeString,
     });
   }
@@ -135,31 +177,49 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Delay buttons
   delay1Button.addEventListener("click", () => {
+    if (difficulty === 'hardcore') return;
+    if (difficulty === 'balanced' && !skipUnlocked) return;
     clearInterval(timerInterval);
     window.electronAPI.delayBreak(1);
   });
 
   delay5Button.addEventListener("click", () => {
+    if (difficulty === 'hardcore') return;
+    if (difficulty === 'balanced' && !skipUnlocked) return;
     clearInterval(timerInterval);
     window.electronAPI.delayBreak(5);
   });
 
   // Skip button
   skipButton.addEventListener("click", () => {
+    if (difficulty === 'hardcore') return;
+    if (difficulty === 'balanced' && !skipUnlocked) return;
     endSound.play().catch(() => {});
     clearInterval(timerInterval);
     window.electronAPI.endBreak();
   });
+
+  // End early button
+  const endEarlyBtn = document.getElementById('end-early');
+  if (endEarlyBtn) {
+    endEarlyBtn.addEventListener("click", () => {
+      endSound.play().catch(() => {});
+      clearInterval(timerInterval);
+      window.electronAPI.endBreak();
+    });
+  }
 
   // Lock button
   lockButton.addEventListener("click", () => {
     window.electronAPI.lockScreen();
   });
 
-  // Double-Esc to skip
+  // Double-Esc to skip (respects difficulty)
   let lastEscPress = 0;
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
+      if (difficulty === 'hardcore') return;
+      if (difficulty === 'balanced' && !skipUnlocked) return;
       const now = Date.now();
       if (now - lastEscPress <= 500) {
         endSound.play().catch(() => {});
@@ -175,5 +235,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   window.addEventListener("unload", () => {
     clearInterval(timerInterval);
+    if (skipPauseTimer) clearTimeout(skipPauseTimer);
   });
 });

@@ -58,6 +58,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
   // Custom break background image upload
   uploadBreakImage: () => ipcRenderer.invoke("upload-break-image"),
 
+  // Overtime nudge
+  dismissOvertimeNudge: () => ipcRenderer.send("dismiss-overtime-nudge"),
+  getOvertimeInfo: () => ipcRenderer.invoke("get-overtime-info"),
+
   // Automations
   saveAutomation: (automation) => ipcRenderer.send("save-automation", automation),
   deleteAutomation: (id) => ipcRenderer.send("delete-automation", id),

@@ -39,20 +39,41 @@ class RecordingDetector extends EventEmitter {
 
   async detectRecording() {
     const platform = process.platform;
-    const processes = this.getRecordingProcesses(platform);
 
+    if (platform === 'darwin') {
+      return this.detectMacOS();
+    } else if (platform === 'win32') {
+      return this.detectWindows();
+    } else {
+      return this.detectLinux();
+    }
+  }
+
+  detectMacOS() {
     return new Promise((resolve) => {
-      let cmd;
-      if (platform === 'darwin') {
-        const grepPattern = processes.join('\\|');
-        cmd = `ps -ax -o command | grep -i '${grepPattern}' | grep -v grep | head -1`;
-      } else if (platform === 'win32') {
-        const filters = processes.map(p => `IMAGENAME eq ${p}`).join('" /FI "');
-        cmd = `tasklist /FI "${filters}" /NH 2>nul`;
-      } else {
-        const grepPattern = processes.join('\\|');
-        cmd = `ps -ax -o command | grep -i '${grepPattern}' | grep -v grep | head -1`;
-      }
+      // Check for specific recording app processes using exact matching
+      // pgrep -x matches exact process name, avoiding false positives
+      const checks = [
+        'pgrep -x screencaptureui',   // macOS native screen recording
+        'pgrep -x "OBS"',             // OBS Studio
+        'pgrep -xi "ScreenFlow"',     // ScreenFlow
+        'pgrep -xi "Camtasia"',       // Camtasia
+      ];
+
+      // Also check for QuickTime in recording mode
+      const cmd = `(${checks.join(' || ')} || ps -ax -o command | grep -i "QuickTime Player" | grep -v grep) 2>/dev/null | head -1`;
+
+      exec(cmd, { timeout: 5000 }, (error, stdout) => {
+        const found = !!(stdout && stdout.trim().length > 0);
+        this.log(`Recording check: ${found ? 'detected' : 'none'}`);
+        resolve(found);
+      });
+    });
+  }
+
+  detectWindows() {
+    return new Promise((resolve) => {
+      const cmd = `tasklist /FI "IMAGENAME eq obs64.exe" /FI "IMAGENAME eq obs32.exe" /FI "IMAGENAME eq GameBarPresenceWriter.exe" /FI "IMAGENAME eq Camtasia.exe" /NH 2>nul`;
 
       exec(cmd, { timeout: 5000 }, (error, stdout) => {
         const found = stdout && stdout.trim().length > 0 && !stdout.includes('No tasks');
@@ -62,15 +83,16 @@ class RecordingDetector extends EventEmitter {
     });
   }
 
-  getRecordingProcesses(platform) {
-    if (platform === 'darwin') {
-      // Use exact process names to avoid false positives (e.g. "OBS" matching "observe")
-      return ['screencaptureui', 'OBS.app', 'obs --', 'ScreenFlow', 'Camtasia', 'QuickTime Player'];
-    } else if (platform === 'win32') {
-      return ['obs64.exe', 'obs32.exe', 'GameBarPresenceWriter.exe', 'Camtasia.exe'];
-    } else {
-      return ['obs --', 'obs-studio', 'simplescreenrecorder', 'kazam'];
-    }
+  detectLinux() {
+    return new Promise((resolve) => {
+      const cmd = `pgrep -x "obs|simplescreenrecorder|kazam" 2>/dev/null | head -1`;
+
+      exec(cmd, { timeout: 5000 }, (error, stdout) => {
+        const found = !!(stdout && stdout.trim().length > 0);
+        this.log(`Recording check: ${found ? 'detected' : 'none'}`);
+        resolve(found);
+      });
+    });
   }
 }
 

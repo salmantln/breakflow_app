@@ -228,6 +228,208 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  // Long breaks
+  const longBreaksEnabled = document.getElementById("longBreaksEnabled");
+  const longBreaksConfig = document.getElementById("longBreaksConfig");
+  if (longBreaksEnabled) {
+    longBreaksEnabled.checked = settings.longBreaksEnabled || false;
+    if (longBreaksConfig) longBreaksConfig.style.display = longBreaksEnabled.checked ? 'block' : 'none';
+    longBreaksEnabled.addEventListener("change", (e) => {
+      window.electronAPI.saveSettings({ longBreaksEnabled: e.target.checked });
+      if (longBreaksConfig) longBreaksConfig.style.display = e.target.checked ? 'block' : 'none';
+    });
+  }
+  const longBreakEvery = document.getElementById("longBreakEvery");
+  if (longBreakEvery) {
+    longBreakEvery.value = settings.longBreakEvery || 3;
+    longBreakEvery.addEventListener("change", (e) => {
+      window.electronAPI.saveSettings({ longBreakEvery: parseInt(e.target.value) || 3 });
+    });
+  }
+  const longBreakDuration = document.getElementById("longBreakDuration");
+  if (longBreakDuration) {
+    longBreakDuration.value = settings.longBreakDuration || 3;
+    longBreakDuration.addEventListener("change", (e) => {
+      window.electronAPI.saveSettings({ longBreakDuration: parseInt(e.target.value) || 3 });
+    });
+  }
+
+  // Office hours
+  const officeHoursEnabled = document.getElementById("officeHoursEnabled");
+  const officeHoursConfig = document.getElementById("officeHoursConfig");
+  if (officeHoursEnabled) {
+    officeHoursEnabled.checked = settings.officeHoursEnabled || false;
+    if (officeHoursConfig) officeHoursConfig.style.display = officeHoursEnabled.checked ? 'block' : 'none';
+    officeHoursEnabled.addEventListener("change", (e) => {
+      window.electronAPI.saveSettings({ officeHoursEnabled: e.target.checked });
+      if (officeHoursConfig) officeHoursConfig.style.display = e.target.checked ? 'block' : 'none';
+    });
+  }
+  const officeHoursScheduleType = document.getElementById("officeHoursScheduleType");
+  if (officeHoursScheduleType) {
+    officeHoursScheduleType.value = settings.officeHoursScheduleType || 'same';
+    officeHoursScheduleType.addEventListener("change", (e) => {
+      window.electronAPI.saveSettings({ officeHoursScheduleType: e.target.value });
+      renderOfficeHoursSchedule();
+    });
+  }
+
+  const dayLabels = { mon: 'Monday', tue: 'Tuesday', wed: 'Wednesday', thu: 'Thursday', fri: 'Friday', sat: 'Saturday', sun: 'Sunday' };
+  const dayOrder = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
+  function renderOfficeHoursSchedule() {
+    const container = document.getElementById("officeHoursSchedule");
+    if (!container) return;
+    container.innerHTML = '';
+    const schedule = settings.officeHoursSchedule || {};
+    const scheduleType = settings.officeHoursScheduleType || 'same';
+
+    dayOrder.forEach((day) => {
+      const dayData = schedule[day] || { enabled: false, start: '10:00', end: '19:00' };
+      const row = document.createElement('div');
+      row.className = 'schedule-row';
+
+      // For "same" mode, only show toggle for enabled/disabled, times from first enabled day
+      if (scheduleType === 'same' && day !== 'mon') {
+        // Show day name + toggle only (times follow Monday)
+      }
+
+      row.innerHTML = `
+        <label class="toggle" style="width: 36px; height: 20px;">
+          <input type="checkbox" class="day-toggle" data-day="${day}" ${dayData.enabled ? 'checked' : ''} />
+          <span class="toggle-slider" style="border-radius: 10px;"></span>
+        </label>
+        <span class="day-name" style="${!dayData.enabled ? 'opacity: 0.5;' : ''}">${dayLabels[day]}</span>
+        ${scheduleType === 'different' || day === 'mon' ? `
+          <input type="time" class="day-start" data-day="${day}" value="${dayData.start}" ${!dayData.enabled ? 'disabled' : ''} />
+          <span>to</span>
+          <input type="time" class="day-end" data-day="${day}" value="${dayData.end}" ${!dayData.enabled ? 'disabled' : ''} />
+        ` : ''}
+      `;
+      container.appendChild(row);
+    });
+
+    container.querySelectorAll('.day-toggle').forEach(toggle => {
+      toggle.addEventListener('change', () => {
+        const day = toggle.dataset.day;
+        const s = settings.officeHoursSchedule || {};
+        if (!s[day]) s[day] = { enabled: false, start: '10:00', end: '19:00' };
+        s[day].enabled = toggle.checked;
+        settings.officeHoursSchedule = s;
+        window.electronAPI.saveSettings({ officeHoursSchedule: s });
+        renderOfficeHoursSchedule();
+      });
+    });
+
+    container.querySelectorAll('.day-start, .day-end').forEach(input => {
+      input.addEventListener('change', () => {
+        const day = input.dataset.day;
+        const s = settings.officeHoursSchedule || {};
+        if (!s[day]) s[day] = { enabled: true, start: '10:00', end: '19:00' };
+        if (input.classList.contains('day-start')) {
+          s[day].start = input.value;
+          // If same schedule, apply to all enabled days
+          if ((settings.officeHoursScheduleType || 'same') === 'same') {
+            dayOrder.forEach(d => { if (s[d]) s[d].start = input.value; });
+          }
+        } else {
+          s[day].end = input.value;
+          if ((settings.officeHoursScheduleType || 'same') === 'same') {
+            dayOrder.forEach(d => { if (s[d]) s[d].end = input.value; });
+          }
+        }
+        settings.officeHoursSchedule = s;
+        window.electronAPI.saveSettings({ officeHoursSchedule: s });
+      });
+    });
+  }
+
+  renderOfficeHoursSchedule();
+
+  // Break skip difficulty
+  document.querySelectorAll('.skip-difficulty-btn').forEach(btn => {
+    if (btn.dataset.difficulty === (settings.breakSkipDifficulty || 'casual')) {
+      btn.classList.add('active');
+    }
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.skip-difficulty-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      window.electronAPI.saveSettings({ breakSkipDifficulty: btn.dataset.difficulty });
+    });
+  });
+
+  // Don't break while typing
+  const dontBreakWhileTyping = document.getElementById("dontBreakWhileTyping");
+  if (dontBreakWhileTyping) {
+    dontBreakWhileTyping.checked = settings.dontBreakWhileTyping || false;
+    dontBreakWhileTyping.addEventListener("change", (e) => {
+      window.electronAPI.saveSettings({ dontBreakWhileTyping: e.target.checked });
+    });
+  }
+
+  // End break early
+  const endBreakEarlyIfNearly = document.getElementById("endBreakEarlyIfNearly");
+  const earlyEndConfig = document.getElementById("earlyEndConfig");
+  if (endBreakEarlyIfNearly) {
+    endBreakEarlyIfNearly.checked = settings.endBreakEarlyIfNearly || false;
+    if (earlyEndConfig) earlyEndConfig.style.display = endBreakEarlyIfNearly.checked ? 'block' : 'none';
+    endBreakEarlyIfNearly.addEventListener("change", (e) => {
+      window.electronAPI.saveSettings({ endBreakEarlyIfNearly: e.target.checked });
+      if (earlyEndConfig) earlyEndConfig.style.display = e.target.checked ? 'block' : 'none';
+    });
+  }
+  const endBreakEarlyThreshold = document.getElementById("endBreakEarlyThreshold");
+  if (endBreakEarlyThreshold) {
+    endBreakEarlyThreshold.value = settings.endBreakEarlyThreshold || 10;
+    endBreakEarlyThreshold.addEventListener("change", (e) => {
+      window.electronAPI.saveSettings({ endBreakEarlyThreshold: parseInt(e.target.value) || 10 });
+    });
+  }
+
+  // Break reminders & nudges
+  const breakReminderEnabled = document.getElementById("breakReminderEnabled");
+  if (breakReminderEnabled) {
+    breakReminderEnabled.checked = settings.breakReminderEnabled !== false;
+    breakReminderEnabled.addEventListener("change", (e) => {
+      window.electronAPI.saveSettings({ breakReminderEnabled: e.target.checked });
+    });
+  }
+  const breakReminderMinutes = document.getElementById("breakReminderMinutes");
+  if (breakReminderMinutes) {
+    breakReminderMinutes.value = settings.breakReminderMinutes || 1;
+    breakReminderMinutes.addEventListener("change", (e) => {
+      window.electronAPI.saveSettings({ breakReminderMinutes: parseInt(e.target.value) || 1 });
+    });
+  }
+  const countdownEnabled = document.getElementById("countdownEnabled");
+  if (countdownEnabled) {
+    countdownEnabled.checked = settings.countdownEnabled !== false;
+    countdownEnabled.addEventListener("change", (e) => {
+      window.electronAPI.saveSettings({ countdownEnabled: e.target.checked });
+    });
+  }
+  const countdownDuration = document.getElementById("countdownDuration");
+  if (countdownDuration) {
+    countdownDuration.value = settings.countdownDuration || 5;
+    countdownDuration.addEventListener("change", (e) => {
+      window.electronAPI.saveSettings({ countdownDuration: parseInt(e.target.value) || 5 });
+    });
+  }
+  const overtimeNudgeEnabled = document.getElementById("overtimeNudgeEnabled");
+  if (overtimeNudgeEnabled) {
+    overtimeNudgeEnabled.checked = settings.overtimeNudgeEnabled !== false;
+    overtimeNudgeEnabled.addEventListener("change", (e) => {
+      window.electronAPI.saveSettings({ overtimeNudgeEnabled: e.target.checked });
+    });
+  }
+  const overtimeNudgeShowWhenPaused = document.getElementById("overtimeNudgeShowWhenPaused");
+  if (overtimeNudgeShowWhenPaused) {
+    overtimeNudgeShowWhenPaused.checked = settings.overtimeNudgeShowWhenPaused !== false;
+    overtimeNudgeShowWhenPaused.addEventListener("change", (e) => {
+      window.electronAPI.saveSettings({ overtimeNudgeShowWhenPaused: e.target.checked });
+    });
+  }
+
   // Theme
   const colorTheme = document.getElementById("colorTheme");
   if (colorTheme) {

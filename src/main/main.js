@@ -42,6 +42,37 @@ const store = new Store({
     breakGradient: 'linear-gradient(135deg, #0f2027, #203a43, #2c5364)',
     // Phase 5: Automations
     automations: [],
+    // Office Hours
+    officeHoursEnabled: false,
+    officeHoursScheduleType: 'same', // 'same' or 'different'
+    officeHoursSchedule: {
+      mon: { enabled: true, start: '10:00', end: '19:00' },
+      tue: { enabled: true, start: '10:00', end: '19:00' },
+      wed: { enabled: true, start: '10:00', end: '19:00' },
+      thu: { enabled: true, start: '10:00', end: '19:00' },
+      fri: { enabled: true, start: '10:00', end: '19:00' },
+      sat: { enabled: false, start: '10:00', end: '19:00' },
+      sun: { enabled: false, start: '10:00', end: '19:00' },
+    },
+    // Long Breaks
+    longBreaksEnabled: false,
+    longBreakEvery: 3,
+    longBreakDuration: 3,
+    // Break Skip Difficulty
+    breakSkipDifficulty: 'casual', // 'casual', 'balanced', 'hardcore'
+    // Typing/Dragging pause
+    dontBreakWhileTyping: false,
+    // End break early
+    endBreakEarlyIfNearly: false,
+    endBreakEarlyThreshold: 10,
+    // Break Reminders & Nudges
+    breakReminderEnabled: true,
+    breakReminderMinutes: 1,
+    breakReminderDuration: 10,
+    countdownEnabled: true,
+    countdownDuration: 5,
+    overtimeNudgeEnabled: true,
+    overtimeNudgeShowWhenPaused: true,
   }
 });
 
@@ -65,6 +96,11 @@ let automationRunner;
 let cooldownTimeout = null;
 let idleCheckInterval = null;
 let isIdlePaused = false;
+let countdownWindow = null;
+let overtimeNudgeWindow = null;
+let overtimeStartTime = null;
+let overtimeInterval = null;
+let lastInputTime = Date.now();
 
 // Format time for display
 function formatTime(seconds) {
@@ -245,36 +281,191 @@ function updateTrayMenu() {
   }
 }
 
+// Check if currently within office hours
+function isWithinOfficeHours() {
+  if (!store.get('officeHoursEnabled')) return true;
+
+  const now = new Date();
+  const dayNames = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+  const dayKey = dayNames[now.getDay()];
+  const schedule = store.get('officeHoursSchedule') || {};
+  const daySchedule = schedule[dayKey];
+
+  if (!daySchedule || !daySchedule.enabled) return false;
+
+  const [startH, startM] = daySchedule.start.split(':').map(Number);
+  const [endH, endM] = daySchedule.end.split(':').map(Number);
+  const nowMins = now.getHours() * 60 + now.getMinutes();
+  const startMins = startH * 60 + startM;
+  const endMins = endH * 60 + endM;
+
+  return nowMins >= startMins && nowMins < endMins;
+}
+
+// Get break duration accounting for long breaks
+function getEffectiveBreakDuration() {
+  if (store.get('longBreaksEnabled')) {
+    const every = store.get('longBreakEvery') || 3;
+    if (completedSessions > 0 && completedSessions % every === 0) {
+      return (store.get('longBreakDuration') || 3) * 60;
+    }
+  }
+  return store.get('breakDuration') * 60;
+}
+
+// Show countdown notification before break
+function showCountdownNotification(durationSeconds, callback) {
+  if (countdownWindow) {
+    countdownWindow.close();
+    countdownWindow = null;
+  }
+
+  const { x, y } = screen.getCursorScreenPoint();
+  countdownWindow = new BrowserWindow({
+    width: 280,
+    height: 60,
+    x: x + 20,
+    y: y - 70,
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    resizable: false,
+    focusable: false,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: false,
+      contextIsolation: true,
+    }
+  });
+
+  countdownWindow.loadFile(path.join(__dirname, '../renderer/pages/cursor-notification.html'));
+  countdownWindow.setAlwaysOnTop(true, 'screen-saver');
+
+  countdownWindow.on('closed', () => {
+    countdownWindow = null;
+  });
+
+  // Close after duration + margin and trigger callback
+  setTimeout(() => {
+    if (countdownWindow) {
+      countdownWindow.close();
+      countdownWindow = null;
+    }
+    if (callback) callback();
+  }, (durationSeconds + 1) * 1000);
+}
+
+// Show overtime nudge
+function showOvertimeNudge() {
+  if (overtimeNudgeWindow) return;
+
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width } = primaryDisplay.workAreaSize;
+
+  overtimeNudgeWindow = new BrowserWindow({
+    width: 280,
+    height: 70,
+    x: width - 300,
+    y: 40,
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    resizable: false,
+    focusable: false,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: false,
+      contextIsolation: true,
+    }
+  });
+
+  overtimeNudgeWindow.loadFile(path.join(__dirname, '../renderer/pages/overtime-nudge.html'));
+  overtimeNudgeWindow.setAlwaysOnTop(true, 'floating');
+
+  overtimeNudgeWindow.on('closed', () => {
+    overtimeNudgeWindow = null;
+  });
+}
+
+function closeOvertimeNudge() {
+  if (overtimeNudgeWindow) {
+    overtimeNudgeWindow.close();
+    overtimeNudgeWindow = null;
+  }
+  if (overtimeInterval) {
+    clearInterval(overtimeInterval);
+    overtimeInterval = null;
+  }
+  overtimeStartTime = null;
+}
+
 // Timer functions
 function startTimer() {
   if (timerInterval) clearInterval(timerInterval);
 
   timerPaused = false;
   pauseReason = null;
+  closeOvertimeNudge();
+
   timerInterval = setInterval(() => {
     if (currentTime > 0) {
       currentTime--;
       sendTimerUpdate();
       updateTrayMenu();
+
+      // Show break reminder notification N minutes before break
+      if (isWorkTime && store.get('breakReminderEnabled')) {
+        const reminderSeconds = (store.get('breakReminderMinutes') || 1) * 60;
+        if (currentTime === reminderSeconds) {
+          showSimpleNotification('Break Coming Up', `Break starts in ${store.get('breakReminderMinutes')} minute(s)`);
+        }
+      }
     } else {
       clearInterval(timerInterval);
 
       if (isWorkTime) {
+        // Check office hours
+        if (!isWithinOfficeHours()) {
+          currentTime = 5 * 60; // re-check in 5 min
+          sendTimerUpdate();
+          startTimer();
+          return;
+        }
+
         // Check if focus app is active — delay break
         const status = detector ? detector.getStatus() : {};
         if (status.isFocusApp && store.get('focusAppBehavior') === 'delay') {
-          currentTime = 5 * 60; // delay 5 min
+          currentTime = 5 * 60;
           sendTimerUpdate();
           startTimer();
           showSimpleNotification('Break Delayed', `${status.focusedApp} is active — break delayed 5 min`);
           return;
         }
 
-        isWorkTime = false;
-        completedSessions++;
-        currentTime = breakTime;
-        notifyBreakStart();
-        createBreakOverlay();
+        // Check typing/dragging — delay break
+        if (store.get('dontBreakWhileTyping')) {
+          const idleTime = powerMonitor.getSystemIdleTime();
+          if (idleTime < 3) {
+            // User is actively typing, delay 30s
+            currentTime = 30;
+            sendTimerUpdate();
+            startTimer();
+            return;
+          }
+        }
+
+        // Show countdown before break
+        if (store.get('countdownEnabled')) {
+          const countdownSecs = store.get('countdownDuration') || 5;
+          showCountdownNotification(countdownSecs, () => {
+            triggerBreak();
+          });
+          return;
+        }
+
+        triggerBreak();
       } else {
         isWorkTime = true;
         currentTime = store.get('workDuration') * 60;
@@ -283,11 +474,26 @@ function startTimer() {
           breakOverlayWindow.close();
           breakOverlayWindow = null;
         }
+        startTimer();
       }
-
-      startTimer();
     }
   }, 1000);
+}
+
+function triggerBreak() {
+  isWorkTime = false;
+  completedSessions++;
+  currentTime = getEffectiveBreakDuration();
+  breakTime = currentTime;
+  sendTimerUpdate();
+  notifyBreakStart();
+  createBreakOverlay();
+  startTimer();
+
+  // Start overtime tracking for nudge
+  if (store.get('overtimeNudgeEnabled')) {
+    overtimeStartTime = Date.now();
+  }
 }
 
 function pauseTimer(reason) {
@@ -321,6 +527,7 @@ function skipToBreak() {
 
 function skipBreak() {
   clearInterval(timerInterval);
+  closeOvertimeNudge();
   if (breakOverlayWindow) {
     breakOverlayWindow.close();
     breakOverlayWindow = null;
@@ -345,6 +552,7 @@ function delayBreak(minutes) {
 
 // Send timer update to all windows
 function sendTimerUpdate() {
+  const isLongBreak = store.get('longBreaksEnabled') && completedSessions > 0 && completedSessions % (store.get('longBreakEvery') || 3) === 0;
   const data = {
     time: formatTime(currentTime),
     rawSeconds: currentTime,
@@ -355,6 +563,11 @@ function sendTimerUpdate() {
     meetingSource: meetingSource,
     autoPaused: !!pauseReason,
     pauseReason: pauseReason,
+    breakSkipDifficulty: store.get('breakSkipDifficulty'),
+    endBreakEarlyIfNearly: store.get('endBreakEarlyIfNearly'),
+    endBreakEarlyThreshold: store.get('endBreakEarlyThreshold'),
+    isLongBreak: isLongBreak,
+    officeHoursActive: isWithinOfficeHours(),
   };
 
   if (mainWindow) {
@@ -629,6 +842,7 @@ ipcMain.on('start-break', () => {
 ipcMain.on('skip-break', () => skipBreak());
 
 ipcMain.on('end-break', () => {
+  closeOvertimeNudge();
   if (breakOverlayWindow) {
     breakOverlayWindow.close();
     breakOverlayWindow = null;
@@ -820,4 +1034,17 @@ ipcMain.handle('test-automation', async (event, automation) => {
 
 ipcMain.handle('get-prebuilt-automations', () => {
   return AutomationRunner.getPrebuiltAutomations();
+});
+
+// Overtime nudge dismiss
+ipcMain.on('dismiss-overtime-nudge', () => {
+  closeOvertimeNudge();
+});
+
+// Get overtime info
+ipcMain.handle('get-overtime-info', () => {
+  if (!overtimeStartTime) return null;
+  const elapsedMs = Date.now() - overtimeStartTime;
+  const elapsedMin = Math.floor(elapsedMs / 60000);
+  return { minutes: elapsedMin };
 });

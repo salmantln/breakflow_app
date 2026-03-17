@@ -411,6 +411,46 @@
       color: var(--text-secondary);
     }
 
+    /* Skip difficulty buttons */
+    .skip-difficulty-btn {
+      background: var(--bg-tertiary);
+      border: 2px solid transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: border-color 200ms, background-color 200ms;
+    }
+    .skip-difficulty-btn:hover { background: rgba(255,255,255,0.06); }
+    .skip-difficulty-btn.active {
+      border-color: var(--accent-color);
+      background: rgba(88, 101, 242, 0.12);
+    }
+
+    /* Office hours schedule row */
+    .schedule-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 6px 0;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    .schedule-row label.toggle { flex-shrink: 0; }
+    .schedule-row .day-name { width: 80px; }
+    .schedule-row input[type="time"] {
+      background: var(--bg-tertiary);
+      border: none;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.08);
+      color: var(--text-primary);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-family: inherit;
+      width: 90px;
+    }
+    .schedule-row input[type="time"]::-webkit-calendar-picker-indicator {
+      filter: invert(0.7);
+    }
+
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         animation-duration: 0.01ms !important;
@@ -497,6 +537,136 @@
           <div class="setting-item">
             <label>Break Duration (minutes)</label>
             <input type="number" id="breakDuration" min="1" max="30" value="5" />
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Long Breaks</h3>
+          <div class="toggle-row">
+            <span class="toggle-label">Enable long breaks</span>
+            <label class="toggle">
+              <input type="checkbox" id="longBreaksEnabled" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div id="longBreaksConfig" style="display: none;">
+            <div class="setting-item">
+              <label>Every N sessions is a long break</label>
+              <input type="number" id="longBreakEvery" value="3" min="2" max="10" />
+            </div>
+            <div class="setting-item">
+              <label>Long break duration (minutes)</label>
+              <input type="number" id="longBreakDuration" value="3" min="1" max="30" />
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Office Hours</h3>
+          <div class="toggle-row">
+            <span class="toggle-label">Show breaks only during enabled days and hours</span>
+            <label class="toggle">
+              <input type="checkbox" id="officeHoursEnabled" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div id="officeHoursConfig" style="display: none;">
+            <div class="setting-item">
+              <label>Scheduling preference</label>
+              <select id="officeHoursScheduleType">
+                <option value="same">Same schedule every day</option>
+                <option value="different">Different schedule for each day</option>
+              </select>
+            </div>
+            <div id="officeHoursSchedule" style="margin-top: 12px;"></div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Break Skip Difficulty</h3>
+          <div class="setting-item">
+            <div id="skipDifficultyOptions" style="display: flex; gap: 8px; margin-top: 4px;">
+              <button class="skip-difficulty-btn" data-difficulty="casual" style="flex: 1; padding: 12px 8px; border-radius: 8px; font-size: 13px; text-align: center; margin: 0;">
+                <div style="font-weight: 600;">Casual</div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Skip anytime</div>
+              </button>
+              <button class="skip-difficulty-btn" data-difficulty="balanced" style="flex: 1; padding: 12px 8px; border-radius: 8px; font-size: 13px; text-align: center; margin: 0;">
+                <div style="font-weight: 600;">Balanced</div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Skip after a pause</div>
+              </button>
+              <button class="skip-difficulty-btn" data-difficulty="hardcore" style="flex: 1; padding: 12px 8px; border-radius: 8px; font-size: 13px; text-align: center; margin: 0;">
+                <div style="font-weight: 600;">Hardcore</div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">No skips allowed</div>
+              </button>
+            </div>
+          </div>
+          <div class="toggle-row" style="margin-top: 12px;">
+            <span class="toggle-label">Don't show breaks while I'm typing or dragging</span>
+            <label class="toggle">
+              <input type="checkbox" id="dontBreakWhileTyping" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <span class="toggle-label">Let me "End break" early if nearly done</span>
+            <label class="toggle">
+              <input type="checkbox" id="endBreakEarlyIfNearly" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div id="earlyEndConfig" style="display: none;">
+            <div class="setting-item">
+              <label>Show "End break" button in last N seconds</label>
+              <input type="number" id="endBreakEarlyThreshold" value="10" min="3" max="60" />
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Break Reminders & Nudges</h3>
+          <div class="toggle-row">
+            <span class="toggle-label">Show a reminder before a break appears</span>
+            <label class="toggle">
+              <input type="checkbox" id="breakReminderEnabled" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="setting-item">
+            <label>Show reminder N minute(s) before break</label>
+            <input type="number" id="breakReminderMinutes" value="1" min="1" max="10" />
+          </div>
+          <div style="display: flex; gap: 16px; margin-top: 12px;">
+            <div style="flex: 1;">
+              <h4 style="margin: 0 0 8px 0; font-size: 14px; color: var(--text-primary);">Countdown before break</h4>
+              <div class="toggle-row">
+                <span class="toggle-label">Enabled</span>
+                <label class="toggle">
+                  <input type="checkbox" id="countdownEnabled" checked />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="setting-item">
+                <label>Countdown duration (seconds)</label>
+                <input type="number" id="countdownDuration" value="5" min="3" max="30" />
+              </div>
+            </div>
+            <div style="flex: 1;">
+              <h4 style="margin: 0 0 8px 0; font-size: 14px; color: var(--text-primary);">Overtime nudge</h4>
+              <div class="toggle-row">
+                <span class="toggle-label">Enabled</span>
+                <label class="toggle">
+                  <input type="checkbox" id="overtimeNudgeEnabled" checked />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="toggle-row">
+                <span class="toggle-label">Show even when paused</span>
+                <label class="toggle">
+                  <input type="checkbox" id="overtimeNudgeShowWhenPaused" checked />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
           </div>
         </div>
 
