@@ -1,0 +1,816 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Break Flow</title>
+  <style>
+    :root {
+      --bg-primary: #36393f;
+      --bg-secondary: #2f3136;
+      --bg-tertiary: #202225;
+      --text-primary: #ffffff;
+      --text-secondary: #dcddde;
+      --text-muted: #72767d;
+      --accent-color: #5865f2;
+      --accent-hover: #4752c4;
+      --success: #43b581;
+      --warning: #faa61a;
+      --danger: #ed4245;
+    }
+
+    ::-webkit-scrollbar { display: none; }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--text-primary);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background-color: var(--bg-secondary);
+    }
+
+    #timer-display {
+      font-size: 72px;
+      font-weight: bold;
+      margin: 40px 0;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-primary);
+      display: flex;
+    }
+
+    .timer-char {
+      display: inline-block;
+      transition: opacity 200ms cubic-bezier(0.23, 1, 0.32, 1), transform 200ms cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    button {
+      background: var(--accent-color);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      margin: 0 10px;
+      cursor: pointer;
+      font-size: 16px;
+      font-family: inherit;
+      transition: background-color 200ms cubic-bezier(0.23, 1, 0.32, 1), transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    button:active { transform: scale(0.96); }
+
+    @media (hover: hover) and (pointer: fine) {
+      button:hover { background: var(--accent-hover); }
+    }
+
+    .sidebar {
+      width: 240px;
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      display: flex;
+      flex-direction: column;
+      box-shadow: 1px 0 0 rgba(255, 255, 255, 0.06), 2px 0 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .main-content {
+      flex: 1;
+      background: var(--bg-primary);
+      position: relative;
+      overflow-y: auto;
+    }
+
+    .nav-item {
+      padding: 8px 16px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 4px;
+      margin: 2px 8px;
+      transition: background-color 150ms cubic-bezier(0.2, 0, 0, 1);
+    }
+
+    .nav-item:hover { background: rgba(255, 255, 255, 0.05); }
+    .nav-item.active { background: rgba(255, 255, 255, 0.08); }
+    .nav-item svg { width: 20px; height: 20px; }
+
+    .content-container { padding: 20px; }
+
+    .timer-view {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 40px;
+    }
+
+    .settings-view {
+      max-width: 800px;
+      margin: 0 auto;
+      display: none;
+    }
+
+    .settings-header {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 24px;
+    }
+
+    h2, h3 { text-wrap: balance; }
+    p, .description { text-wrap: pretty; }
+
+    .settings-section {
+      background: var(--bg-secondary);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .main-content > div { display: none; }
+    .main-content > div.active { display: block; }
+
+    /* Titlebar */
+    .titlebar {
+      height: 38px;
+      background: var(--bg-secondary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      -webkit-app-region: drag;
+      user-select: none;
+      box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2), 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .titlebar-title {
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-left: 12px;
+    }
+
+    .window-controls {
+      display: flex;
+      height: 100%;
+      -webkit-app-region: no-drag;
+    }
+
+    .window-control-button {
+      width: 46px;
+      height: 100%;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background-color 200ms cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      .window-control-button:hover { background: rgba(255, 255, 255, 0.1); }
+      .window-control-button.close:hover { background: var(--danger); }
+    }
+
+    /* macOS */
+    .darwin .titlebar { height: 28px; }
+    .darwin .titlebar-title { margin-left: 70px; text-align: center; flex: 1; }
+    .darwin .window-controls { display: none; }
+    .darwin .app-container { -webkit-app-region: drag; padding-top: 28px; }
+    .darwin .nav-item, .darwin button, .darwin input, .darwin select,
+    .darwin .controls, .darwin .settings-section { -webkit-app-region: no-drag; }
+
+    .app-container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      background-color: var(--bg-primary);
+      padding-top: 0;
+    }
+
+    /* Form elements */
+    select {
+      background: var(--bg-secondary);
+      border: none;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 1px 3px rgba(0, 0, 0, 0.2);
+      color: var(--text-secondary);
+      padding: 8px;
+      border-radius: 4px;
+      width: 200px;
+      margin-top: 8px;
+      font-family: inherit;
+    }
+
+    input[type="number"] {
+      background: var(--bg-secondary);
+      border: none;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 1px 3px rgba(0, 0, 0, 0.2);
+      color: var(--text-primary);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-variant-numeric: tabular-nums;
+      width: 120px;
+      transition: box-shadow 200ms cubic-bezier(0.23, 1, 0.32, 1);
+      outline: none;
+      font-family: inherit;
+    }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+    input[type="number"]:hover {
+      box-shadow: 0 0 0 1px rgba(88, 101, 242, 0.5), 0 1px 3px rgba(0, 0, 0, 0.2);
+      background: #32353b;
+    }
+
+    input[type="number"]:focus {
+      box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2);
+      background: #32353b;
+    }
+
+    input[type="text"] {
+      background: var(--bg-secondary);
+      border: none;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 1px 3px rgba(0, 0, 0, 0.2);
+      color: var(--text-primary);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      width: 200px;
+      outline: none;
+      font-family: inherit;
+    }
+
+    /* Toggle switch */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 8px 0;
+    }
+
+    .toggle-label {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .toggle {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      cursor: pointer;
+    }
+
+    .toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #72767d;
+      border-radius: 12px;
+      transition: background 200ms;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      height: 18px; width: 18px;
+      left: 3px; bottom: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 200ms;
+    }
+
+    .toggle input:checked + .toggle-slider { background: var(--accent-color); }
+    .toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+    /* Color options */
+    .color-options { display: flex; gap: 8px; margin-top: 8px; }
+
+    .color-option {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+      padding: 0;
+    }
+
+    .color-option:active { transform: scale(0.96); }
+    @media (hover: hover) and (pointer: fine) { .color-option:hover { transform: scale(1.1); } }
+    .color-option.active { border-color: white; }
+
+    /* Focus apps */
+    .focus-app-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .focus-app-item .remove-app {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 14px;
+      padding: 4px 8px;
+      margin: 0;
+    }
+
+    .focus-app-item .remove-app:hover { color: var(--danger); }
+
+    .add-app-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .add-app-row button {
+      padding: 8px 12px;
+      font-size: 13px;
+      margin: 0;
+    }
+
+    /* Status */
+    #status {
+      font-size: 14px;
+      margin-top: 8px;
+      color: var(--success);
+      transition: color 200ms;
+    }
+
+    #session-count {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* About */
+    .about-content { text-align: center; padding: 20px; }
+    .app-logo { margin-bottom: 20px; }
+    .app-logo img { outline: 1px solid rgba(255, 255, 255, 0.08); outline-offset: -1px; border-radius: 12px; }
+    .version { color: var(--text-muted); margin-bottom: 20px; }
+    .description { max-width: 600px; margin: 0 auto 40px; line-height: 1.6; }
+    .feature-list { text-align: left; max-width: 400px; margin: 0 auto 40px; }
+    .feature-list ul { list-style-type: none; padding: 0; }
+    .feature-list li { margin: 10px 0; padding-left: 24px; position: relative; }
+    .feature-list li:before { content: "\2713"; position: absolute; left: 0; color: var(--success); }
+    .links { display: flex; gap: 16px; justify-content: center; margin-top: 32px; }
+    .link-button {
+      background: var(--accent-color); color: white; border: none;
+      padding: 8px 16px; border-radius: 4px; cursor: pointer;
+      transition: background-color 200ms cubic-bezier(0.23, 1, 0.32, 1), transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    .link-button:active { transform: scale(0.96); }
+    @media (hover: hover) and (pointer: fine) { .link-button:hover { background: var(--accent-hover); } }
+    .credits { margin: 32px 0; color: var(--text-muted); }
+
+    .setting-item {
+      margin: 12px 0;
+    }
+
+    .setting-item label {
+      display: block;
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    /* Keyboard shortcuts info */
+    .shortcuts-list {
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+
+    .shortcuts-list div {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+    }
+
+    kbd {
+      background: var(--bg-tertiary);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 12px;
+      font-family: inherit;
+      color: var(--text-secondary);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="titlebar">
+    <div class="titlebar-drag-region"></div>
+    <div class="titlebar-title">Break Flow</div>
+    <div class="window-controls">
+      <button class="window-control-button" id="minimize-button">
+        <svg width="12" height="1" viewBox="0 0 12 1"><rect width="12" height="1" fill="currentColor"></rect></svg>
+      </button>
+      <button class="window-control-button" id="maximize-button">
+        <svg width="12" height="12" viewBox="0 0 12 12"><rect width="10" height="10" x="1" y="1" fill="none" stroke="currentColor"></rect></svg>
+      </button>
+      <button class="window-control-button close" id="close-button">
+        <svg width="12" height="12" viewBox="0 0 12 12"><path d="M1 1l10 10m0-10L1 11" stroke="currentColor" stroke-width="1.1"></path></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="app-container">
+    <div class="sidebar">
+      <div class="nav-item active" data-view="timer">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path d="m12,1C5.935,1,1,5.935,1,12s4.935,11,11,11,11-4.935,11-11S18.065,1,12,1Zm4.2,15.4l-5.2-3.9v-7.5h2v6.5l4.4,3.3-1.2,1.6Z" />
+        </svg>
+        <span>Timer</span>
+      </div>
+      <div class="nav-item" data-view="settings">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path d="m21.731,10.096l-1.28-.533c-.109-.378-.241-.745-.396-1.101-.218-.499-.211-1.066-.004-1.569l.176-.428c.317-.77.14-1.655-.449-2.244s-1.474-.766-2.244-.449l-1.278.526c-.57-.316-1.18-.566-1.819-.75l-.533-1.28c-.32-.769-1.071-1.269-1.904-1.269s-1.584.501-1.904,1.269l-.533,1.28c-.639.184-1.249.434-1.819.75l-1.278-.526c-.77-.317-1.655-.14-2.244.449s-.766,1.474-.449,2.244l.526,1.278c-.316.57-.566,1.18-.75,1.819l-1.28.533c-.769.32-1.269,1.071-1.269,1.904s.501,1.584,1.269,1.904l1.28.533c.184.639.434,1.249.75,1.819l-.526,1.278c-.317.77-.14,1.655.449,2.244s1.474.766,2.244.449l1.278-.526c.57.316,1.18.566,1.819.75l.533,1.28c.32.769,1.071,1.269,1.904,1.269s1.584-.501,1.904-1.269l.533-1.28c.639-.184,1.249-.434,1.819-.75l1.278.526c.77.317,1.655.14,2.244-.449s.766-1.474.449-2.244l-.526-1.278c.316-.57.566-1.18.75-1.819l1.28-.533c.769-.32,1.269-1.071,1.269-1.904s-.501-1.584-1.269-1.904Zm-9.731,5.904c-2.206,0-4-1.794-4-4s1.794-4,4-4,4,1.794,4,4-1.794,4-4,4Z" />
+        </svg>
+        <span>Settings</span>
+      </div>
+      <div class="nav-item" data-view="Customization">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M5.68915 1.61287C2.8317 3.61452 1 6.95059 1 10.7315C1 16.9588 5.98222 21.9259 12.0635 22C17.119 22 21.3685 18.5157 22.6873 13.8451C23.1269 12.14 23.6398 7.46954 20.1229 5.6903C17.5171 4.43097 15.1177 5.19804 13.1439 5.82903C11.3995 6.3867 9.98759 6.83808 9.05948 5.6903C8.71536 5.20283 8.90459 4.55183 9.10341 3.86787C9.3279 3.09557 9.56461 2.28125 9.05948 1.61287C8.3268 0.723252 6.7149 0.871522 5.68915 1.61287ZM6.5 13C5.67157 13 5 13.6716 5 14.5C5 15.3284 5.67157 16 6.5 16C7.32843 16 8 15.3284 8 14.5C8 13.6716 7.32843 13 6.5 13ZM4 9.5C4 8.67157 4.67157 8 5.5 8C6.32843 8 7 8.67157 7 9.5C7 10.3284 6.32843 11 5.5 11C4.67157 11 4 10.3284 4 9.5ZM10.5 16C9.67157 16 9 16.6716 9 17.5C9 18.3284 9.67157 19 10.5 19C11.3284 19 12 18.3284 12 17.5C12 16.6716 11.3284 16 10.5 16ZM19.5 11.5C19.5 13.1569 18.3807 14.5 17 14.5C15.6193 14.5 14.5 13.1569 14.5 11.5C14.5 9.84315 15.6193 8.5 17 8.5C18.3807 8.5 19.5 9.84315 19.5 11.5Z" />
+        </svg>
+        <span>Customization</span>
+      </div>
+      <div class="nav-item" data-view="automations">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M14.8234 0.0866699L14.1452 9.04525H22.206L9.1766 23.9133L9.85477 14.9548H1.79402L14.8234 0.0866699Z" />
+        </svg>
+        <span>Automations</span>
+      </div>
+      <div class="nav-item" data-view="about">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path d="m12,1C5.935,1,1,5.935,1,12s4.935,11,11,11,11-4.935,11-11S18.065,1,12,1Zm1,17h-2v-6h-2v-2h2.5c.827,0,1.5.673,1.5,1.5v6.5Zm-1-9.5c-.689,0-1.25-.561-1.25-1.25s.561-1.25,1.25-1.25,1.25.561,1.25,1.25-.561,1.25-1.25,1.25Z" />
+        </svg>
+        <span>About</span>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <!-- Timer View -->
+      <div id="timer-view" class="content-container timer-view">
+        <div class="timer" id="timer-display">20:00</div>
+        <div class="controls">
+          <button onclick="startTimer()">Start</button>
+          <button onclick="pauseTimer()">Pause</button>
+          <button onclick="resetTimer()">Reset</button>
+        </div>
+        <p id="status">Checking...</p>
+        <p id="session-count">Sessions: 0</p>
+      </div>
+
+      <!-- Settings View -->
+      <div id="settings-view" class="content-container settings-view">
+        <div class="settings-header">Settings</div>
+
+        <div class="settings-section">
+          <h3>Timer</h3>
+          <div class="setting-item">
+            <label>Work Duration (minutes)</label>
+            <input type="number" id="minutesInput" value="20" min="1" max="999" />
+          </div>
+          <div class="setting-item">
+            <label>Break Duration (minutes)</label>
+            <input type="number" id="breakDuration" min="1" max="30" value="5" />
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Smart Detection</h3>
+          <div class="toggle-row">
+            <span class="toggle-label">Pause during meetings</span>
+            <label class="toggle">
+              <input type="checkbox" id="autoPauseMeetings" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <span class="toggle-label">Pause during fullscreen apps</span>
+            <label class="toggle">
+              <input type="checkbox" id="autoPauseFullscreen" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <span class="toggle-label">Pause during screen recording</span>
+            <label class="toggle">
+              <input type="checkbox" id="autoPauseRecording" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <span class="toggle-label">Pause during video playback</span>
+            <label class="toggle">
+              <input type="checkbox" id="autoPauseVideoPlayback" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <span class="toggle-label">Pause during calendar events</span>
+            <label class="toggle">
+              <input type="checkbox" id="autoPauseCalendarEvents" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="setting-item" style="margin-top: 12px;">
+            <label>Cooldown after smart pause (minutes)</label>
+            <input type="number" id="smartPauseCooldown" value="2" min="0" max="10" />
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Away Detection</h3>
+          <div class="setting-item">
+            <label>When you're away</label>
+            <select id="awayBehavior">
+              <option value="automatic">Automatic (pause & resume)</option>
+              <option value="pause">Pause only</option>
+              <option value="continue">Continue timer</option>
+              <option value="disabled">Disabled</option>
+            </select>
+          </div>
+          <div class="setting-item">
+            <label>Idle threshold (minutes)</label>
+            <input type="number" id="awayIdleThreshold" value="5" min="1" max="60" />
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Focus Apps</h3>
+          <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 8px;">
+            Delay breaks when these apps are in the foreground
+          </p>
+          <div id="focusAppsList"></div>
+          <div class="add-app-row">
+            <input type="text" id="focusAppInput" placeholder="App name..." />
+            <button id="addFocusApp">Add</button>
+          </div>
+          <div class="setting-item" style="margin-top: 12px;">
+            <label>When focus app is active during break</label>
+            <select id="focusAppBehavior">
+              <option value="delay">Delay break by 5 min</option>
+              <option value="skip">Skip break</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Posture Reminder</h3>
+          <div class="toggle-row">
+            <span class="toggle-label">Enable posture reminders</span>
+            <label class="toggle">
+              <input type="checkbox" id="postureReminder" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="setting-item">
+            <label>Reminder interval (minutes)</label>
+            <input type="number" id="postureInterval" value="30" min="5" max="120" />
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Widget</h3>
+          <button id="widgetToggle">Toggle Floating Widget</button>
+        </div>
+
+        <div class="settings-section">
+          <h3>Keyboard Shortcuts</h3>
+          <div class="shortcuts-list">
+            <div><span>Pause / Resume</span><kbd>Cmd+Shift+P</kbd></div>
+            <div><span>Start Break</span><kbd>Cmd+Shift+B</kbd></div>
+            <div><span>Skip Break</span><kbd>Cmd+Shift+S</kbd></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Customization View -->
+      <div id="Customization-view" class="content-container customization-view">
+        <div class="settings-header">Customization</div>
+
+        <div class="settings-section">
+          <h3>Theme</h3>
+          <div class="setting-item">
+            <label>Color Theme</label>
+            <select id="colorTheme">
+              <option value="dark">Dark</option>
+              <option value="light">Light</option>
+              <option value="system">System</option>
+            </select>
+          </div>
+          <div class="setting-item">
+            <label>Accent Color</label>
+            <div class="color-options">
+              <button class="color-option" data-color="#5865f2" style="background-color: #5865f2"></button>
+              <button class="color-option" data-color="#7C3AED" style="background-color: #7c3aed"></button>
+              <button class="color-option" data-color="#2563EB" style="background-color: #2563eb"></button>
+              <button class="color-option" data-color="#DC2626" style="background-color: #dc2626"></button>
+              <button class="color-option" data-color="#059669" style="background-color: #059669"></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Sounds</h3>
+          <div class="setting-item">
+            <label>Notification Sound</label>
+            <select id="notificationSound">
+              <option value="bell">Bell</option>
+              <option value="chime">Chime</option>
+              <option value="ding">Ding</option>
+              <option value="none">None</option>
+            </select>
+          </div>
+          <div class="setting-item">
+            <label>Volume</label>
+            <div style="display: flex; align-items: center; gap: 12px; margin-top: 4px;">
+              <input type="range" id="soundVolume" min="0" max="100" value="80" style="flex: 1; accent-color: var(--accent-color);" />
+              <span id="soundVolumeLabel" style="color: var(--text-muted); font-size: 13px; min-width: 36px;">80%</span>
+            </div>
+          </div>
+          <div class="toggle-row">
+            <span class="toggle-label">Play sound on break start</span>
+            <label class="toggle">
+              <input type="checkbox" id="playSoundOnBreakStart" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <span class="toggle-label">Play sound on break end</span>
+            <label class="toggle">
+              <input type="checkbox" id="playSoundOnBreakEnd" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="setting-item">
+            <button id="previewSound">Preview Sound</button>
+            <button id="uploadSound">Upload Custom Sound</button>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Break Messages</h3>
+          <div class="toggle-row">
+            <span class="toggle-label">Use custom break messages</span>
+            <label class="toggle">
+              <input type="checkbox" id="useCustomMessages" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div id="customMessagesContainer" style="display: none;">
+            <div id="customMessagesList"></div>
+            <div class="add-app-row">
+              <input type="text" id="customMessageInput" placeholder="Enter a break message..." style="width: 280px;" />
+              <button id="addCustomMessage">Add</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Break Screen</h3>
+          <div class="setting-item">
+            <label>Background Type</label>
+            <select id="breakBackgroundType">
+              <option value="preset">Preset</option>
+              <option value="custom-image">Custom Image</option>
+              <option value="gradient">Gradient</option>
+            </select>
+          </div>
+          <div id="presetBgContainer" class="setting-item">
+            <label>Preset Style</label>
+            <select id="breakBackground">
+              <option value="blur">Blur</option>
+              <option value="calm-blue">Calm Blue</option>
+              <option value="sunset">Sunset</option>
+              <option value="nature">Nature</option>
+              <option value="dim">Dim</option>
+              <option value="solid">Solid</option>
+            </select>
+          </div>
+          <div id="customImageContainer" class="setting-item" style="display: none;">
+            <button id="uploadBreakImage">Choose Image</button>
+            <p id="customImagePath" style="color: var(--text-muted); font-size: 12px; margin-top: 4px;"></p>
+          </div>
+          <div id="gradientContainer" class="setting-item" style="display: none;">
+            <label>Gradient Preset</label>
+            <div class="color-options" id="gradientPresets">
+              <button class="color-option" data-gradient="linear-gradient(135deg, #0f2027, #203a43, #2c5364)" style="background: linear-gradient(135deg, #0f2027, #203a43, #2c5364)"></button>
+              <button class="color-option" data-gradient="linear-gradient(135deg, #1a1a2e, #16213e, #0f3460)" style="background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460)"></button>
+              <button class="color-option" data-gradient="linear-gradient(135deg, #0d1b2a, #1b2838, #1a3a2a)" style="background: linear-gradient(135deg, #0d1b2a, #1b2838, #1a3a2a)"></button>
+              <button class="color-option" data-gradient="linear-gradient(135deg, #2d1b69, #1a1a2e, #0f3460)" style="background: linear-gradient(135deg, #2d1b69, #1a1a2e, #0f3460)"></button>
+              <button class="color-option" data-gradient="linear-gradient(135deg, #1a0000, #2d1b1b, #3d2929)" style="background: linear-gradient(135deg, #1a0000, #2d1b1b, #3d2929)"></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Automations View -->
+      <div id="automations-view" class="content-container">
+        <div class="settings-header">Automations</div>
+        <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px;">
+          Run scripts automatically when breaks start or end
+        </p>
+
+        <div class="settings-section">
+          <h3>Quick Actions</h3>
+          <div id="prebuiltAutomations"></div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Custom Automations</h3>
+          <div id="automationsList"></div>
+          <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
+            <input type="text" id="automationName" placeholder="Automation name" />
+            <select id="automationTrigger">
+              <option value="break-start">On Break Start</option>
+              <option value="break-end">On Break End</option>
+            </select>
+            <select id="automationType">
+              <option value="applescript">AppleScript</option>
+              <option value="shortcut">macOS Shortcut</option>
+              <option value="shell">Shell Command</option>
+            </select>
+            <input type="text" id="automationScript" placeholder="Script or command..." style="width: 100%;" />
+            <button id="addAutomation">Add Automation</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- About View -->
+      <div id="about-view" class="content-container about-view">
+        <div class="settings-header">About Break Flow</div>
+        <div class="settings-section">
+          <div class="about-content">
+            <div class="app-logo">
+              <img src="../../../assets/icons/icon.png" alt="Break Flow Logo" width="64" height="64" />
+            </div>
+            <h2>Break Flow</h2>
+            <p class="version">Version 1.0.0</p>
+            <p class="description">
+              Break Flow is a smart break reminder app that helps you maintain a healthy work-life balance with intelligent meeting detection, auto-pause, and calming break overlays.
+            </p>
+
+            <div class="feature-list">
+              <h3>Features</h3>
+              <ul>
+                <li>Universal meeting detection (Teams, Zoom, Meet, Slack, Discord)</li>
+                <li>Auto-pause during meetings, fullscreen, and recording</li>
+                <li>Calming break overlays with exercises</li>
+                <li>Focus app detection</li>
+                <li>Floating countdown widget</li>
+                <li>Posture reminders</li>
+                <li>Global keyboard shortcuts</li>
+              </ul>
+            </div>
+
+            <div class="credits">
+              <h3>Credits</h3>
+              <p>Created with care by Sarl Studio</p>
+            </div>
+
+            <div class="links">
+              <button class="link-button" onclick="window.electronAPI.openExternal('https://break-flow-landingpage.vercel.app/')">
+                Website
+              </button>
+              <button class="link-button" onclick="window.electronAPI.openExternal('https://x.com/salmantln')" style="display: inline-flex; align-items: center; gap: 6px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                </svg>
+                Follow on X
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../scripts/renderer.js"></script>
+</body>
+
+</html>

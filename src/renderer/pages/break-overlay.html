@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Break Time</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      color: white;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      user-select: none;
+      opacity: 0;
+      animation: fadeIn 800ms cubic-bezier(0.23, 1, 0.32, 1) forwards;
+    }
+
+    /* Background themes */
+    body.bg-blur {
+      background: linear-gradient(135deg, rgba(15, 15, 30, 0.95), rgba(20, 20, 50, 0.95));
+      backdrop-filter: blur(20px);
+    }
+    body.bg-calm-blue {
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    }
+    body.bg-sunset {
+      background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+    }
+    body.bg-nature {
+      background: linear-gradient(135deg, #0d1b2a, #1b2838, #1a3a2a);
+    }
+    body.bg-dim {
+      background: rgba(0, 0, 0, 0.92);
+    }
+    body.bg-solid {
+      background: #1a1a2e;
+    }
+    body.bg-custom-image {
+      background-color: #0f0f0f;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(1.02); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .message {
+      font-size: 2rem;
+      font-weight: 300;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 1rem;
+      text-align: center;
+      max-width: 600px;
+      line-height: 1.4;
+      animation: slideUp 600ms cubic-bezier(0.23, 1, 0.32, 1) 200ms both;
+    }
+
+    .title {
+      font-size: 4rem;
+      font-weight: 200;
+      color: rgba(255, 255, 255, 0.9);
+      margin-bottom: 0.5rem;
+      animation: slideUp 600ms cubic-bezier(0.23, 1, 0.32, 1) 100ms both;
+    }
+
+    .timer {
+      font-size: 5rem;
+      font-weight: 200;
+      color: rgba(255, 255, 255, 0.9);
+      margin-bottom: 2rem;
+      font-variant-numeric: tabular-nums;
+      animation: slideUp 600ms cubic-bezier(0.23, 1, 0.32, 1) 300ms both;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .exercise-tip {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 16px 24px;
+      margin-bottom: 2rem;
+      max-width: 420px;
+      text-align: center;
+      animation: slideUp 600ms cubic-bezier(0.23, 1, 0.32, 1) 400ms both;
+    }
+
+    .exercise-name {
+      font-size: 1rem;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.85);
+      margin-bottom: 4px;
+    }
+
+    .exercise-desc {
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.5);
+      line-height: 1.4;
+    }
+
+    .buttons-container {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+      animation: slideUp 600ms cubic-bezier(0.23, 1, 0.32, 1) 500ms both;
+    }
+
+    .button {
+      background: rgba(255, 255, 255, 0.12);
+      border: none;
+      color: white;
+      padding: 10px 20px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      border-radius: 24px;
+      transition: background-color 200ms cubic-bezier(0.23, 1, 0.32, 1), transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: inherit;
+    }
+
+    .button:active {
+      transform: scale(0.96);
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      .button:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+    }
+
+    .button.primary {
+      background: rgba(88, 101, 242, 0.4);
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      .button.primary:hover {
+        background: rgba(88, 101, 242, 0.6);
+      }
+    }
+
+    .hint {
+      color: rgba(255, 255, 255, 0.3);
+      font-size: 0.8rem;
+      animation: slideUp 600ms cubic-bezier(0.23, 1, 0.32, 1) 600ms both;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-calm-blue">
+  <div class="title">Take a break</div>
+  <div id="message" class="message">Rest your eyes and stretch</div>
+  <div id="timer" class="timer">00:00</div>
+
+  <div id="exercise-tip" class="exercise-tip">
+    <div id="exercise-name" class="exercise-name"></div>
+    <div id="exercise-desc" class="exercise-desc"></div>
+  </div>
+
+  <div class="buttons-container">
+    <button class="button" id="delay1">+1 min</button>
+    <button class="button" id="delay5">+5 min</button>
+    <button class="button" id="skip">Skip</button>
+    <button class="button" id="lock">Lock Screen</button>
+  </div>
+  <div class="hint">Press Esc twice to skip</div>
+
+  <script src="../scripts/break-overlay.js"></script>
+</body>
+
+</html>
