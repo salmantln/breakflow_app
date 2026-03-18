@@ -177,10 +177,6 @@ function createBreakOverlay() {
     });
     win.webContents.on('did-finish-load', () => {
       console.log('[BreakFlow] Overlay loaded successfully on display', index);
-      // Only the primary overlay (display 0) should play sounds
-      if (index !== 0) {
-        win.webContents.send('set-primary', false);
-      }
     });
 
     win.on('closed', () => {
@@ -661,7 +657,12 @@ function toggleWidget() {
 
 // Notifications
 function notifyBreakStart() {
-  showSimpleNotification('Break Time', `Take a ${store.get('breakDuration')} minute break!`);
+  // Use silent notification — sound is played by main window renderer
+  showSimpleNotification('Break Time', `Take a ${store.get('breakDuration')} minute break!`, { silent: true });
+  // Play sound immediately from already-loaded main window (no overlay loading delay)
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('play-break-sound', 'start');
+  }
   // Run break-start automations
   if (automationRunner) {
     automationRunner.runAutomations('break-start', store.get('automations'));
@@ -676,9 +677,9 @@ function notifyWorkStart() {
   }
 }
 
-function showSimpleNotification(title, body) {
+function showSimpleNotification(title, body, options = {}) {
   if (Notification.isSupported()) {
-    const notification = new Notification({ title, body });
+    const notification = new Notification({ title, body, silent: options.silent || false });
     notification.show();
   }
 }
@@ -908,6 +909,10 @@ ipcMain.on('start-break', () => {
 ipcMain.on('skip-break', () => skipBreak());
 
 ipcMain.on('end-break', () => {
+  // Play break-end sound from main window (instant)
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('play-break-sound', 'end');
+  }
   closeOvertimeNudge();
   closeAllBreakOverlays();
   isWorkTime = true;

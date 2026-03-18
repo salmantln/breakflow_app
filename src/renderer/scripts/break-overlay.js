@@ -9,16 +9,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const exerciseNameEl = document.getElementById("exercise-name");
   const exerciseDescEl = document.getElementById("exercise-desc");
 
-  const startSound = new Audio();
-  startSound.src = "../../../assets/sounds/break-start.mp3";
-  const endSound = new Audio();
-  endSound.src = "../../../assets/sounds/break-end.mp3";
-
-  // Only the primary overlay plays sounds (non-primary displays get notified)
-  let isPrimaryOverlay = true;
-  window.electronAPI.onSetPrimary((primary) => {
-    isPrimaryOverlay = primary;
-  });
+  // Sounds are played by the main window (already loaded, no delay)
+  // The overlay no longer plays sounds directly
 
   // Motivational messages
   const messages = [
@@ -62,10 +54,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     messageEl.textContent = settings.customBreakMessages[Math.floor(Math.random() * settings.customBreakMessages.length)];
   }
 
-  // Sound volume
-  const volume = (settings.soundVolume != null ? settings.soundVolume : 80) / 100;
-  startSound.volume = volume;
-  endSound.volume = volume;
 
   // Apply background
   const bgType = settings.breakBackgroundType || 'preset';
@@ -135,9 +123,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function startBreakTimer() {
     breakTimer = totalBreakSeconds;
     updateDisplay();
-    if (isPrimaryOverlay && settings.playSoundOnBreakStart !== false) {
-      startSound.play().catch(() => {});
-    }
 
     timerInterval = setInterval(() => {
       breakTimer--;
@@ -150,9 +135,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
 
       if (breakTimer <= 0) {
-        if (isPrimaryOverlay && settings.playSoundOnBreakEnd !== false) {
-          endSound.play().catch(() => {});
-        }
         clearInterval(timerInterval);
         window.electronAPI.endBreak();
       }
@@ -200,7 +182,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   skipButton.addEventListener("click", () => {
     if (difficulty === 'hardcore') return;
     if (difficulty === 'balanced' && !skipUnlocked) return;
-    if (isPrimaryOverlay) endSound.play().catch(() => {});
     clearInterval(timerInterval);
     window.electronAPI.endBreak();
   });

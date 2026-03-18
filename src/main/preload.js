@@ -89,6 +89,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
   // Primary overlay flag (only primary plays sounds)
   onSetPrimary: (callback) => ipcRenderer.on("set-primary", (_event, isPrimary) => callback(isPrimary)),
 
+  // Play break sounds immediately from main window (already loaded, no delay)
+  onPlayBreakSound: (callback) => ipcRenderer.on("play-break-sound", (_event, type) => callback(type)),
+
   // Logging
   log: (msg) => console.log(msg),
 });

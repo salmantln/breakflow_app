@@ -62,6 +62,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     switchContent("settings");
   });
 
+  // Preload break sounds in main window for instant playback
+  const breakStartSound = new Audio("../../../assets/sounds/break-start.mp3");
+  const breakEndSound = new Audio("../../../assets/sounds/break-end.mp3");
+  breakStartSound.preload = 'auto';
+  breakEndSound.preload = 'auto';
+
+  window.electronAPI.onPlayBreakSound(async (type) => {
+    const settings = await window.electronAPI.getSettings();
+    const volume = (settings.soundVolume != null ? settings.soundVolume : 80) / 100;
+    const sound = type === 'start' ? breakStartSound : breakEndSound;
+    const settingKey = type === 'start' ? 'playSoundOnBreakStart' : 'playSoundOnBreakEnd';
+    if (settings[settingKey] !== false) {
+      sound.volume = volume;
+      sound.currentTime = 0;
+      sound.play().catch(() => {});
+    }
+  });
+
   // Timer logic — driven by main process
   let time = 20 * 60;
   let timerInterval;
