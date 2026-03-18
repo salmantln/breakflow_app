@@ -42,6 +42,9 @@ const store = new Store({
     breakGradient: 'linear-gradient(135deg, #0f2027, #203a43, #2c5364)',
     // Phase 5: Automations
     automations: [],
+    // Meeting detection options
+    meetingExcludedApps: [],
+    meetingNotification: true,
     // Office Hours
     officeHoursEnabled: false,
     officeHoursScheduleType: 'same', // 'same' or 'different'
@@ -70,7 +73,7 @@ const store = new Store({
     breakReminderMinutes: 1,
     breakReminderDuration: 10,
     countdownEnabled: true,
-    countdownDuration: 5,
+    countdownDuration: 10,
     overtimeNudgeEnabled: true,
     overtimeNudgeShowWhenPaused: true,
   }
@@ -78,7 +81,8 @@ const store = new Store({
 
 // Global variables
 let mainWindow;
-let breakOverlayWindow;
+let breakOverlayWindow; // primary overlay (for IPC)
+let breakOverlayWindows = []; // all display overlays
 let widgetWindow;
 let tray;
 let isWorkTime = true;
@@ -112,9 +116,11 @@ function formatTime(seconds) {
 // Create the main window
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 700,
-    height: 400,
-    resizable: false,
+    width: 900,
+    height: 580,
+    minWidth: 700,
+    minHeight: 450,
+    resizable: true,
     frame: process.platform !== 'darwin',
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
     webPreferences: {
@@ -136,34 +142,71 @@ function createWindow() {
   });
 }
 
-// Create break overlay window
+// Create break overlay windows on all displays
 function createBreakOverlay() {
-  const primaryDisplay = screen.getPrimaryDisplay();
-  const { width, height } = primaryDisplay.workAreaSize;
+  const displays = screen.getAllDisplays();
+  console.log('[BreakFlow] createBreakOverlay: found', displays.length, 'display(s)');
 
-  breakOverlayWindow = new BrowserWindow({
-    width: width,
-    height: height,
-    x: 0,
-    y: 0,
-    frame: false,
-    transparent: false,
-    alwaysOnTop: true,
-    skipTaskbar: true,
-    fullscreen: true,
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      nodeIntegration: false,
-      contextIsolation: true
+  displays.forEach((display, index) => {
+    const { x, y, width, height } = display.bounds;
+
+    const win = new BrowserWindow({
+      width: width,
+      height: height,
+      x: x,
+      y: y,
+      frame: false,
+      transparent: false,
+      alwaysOnTop: true,
+      skipTaskbar: true,
+      fullscreen: true,
+      webPreferences: {
+        preload: path.join(__dirname, 'preload.js'),
+        nodeIntegration: false,
+        contextIsolation: true
+      }
+    });
+
+    const overlayPath = path.join(__dirname, '../renderer/pages/break-overlay.html');
+    console.log('[BreakFlow] Loading overlay for display', index, 'at', x, y, width, 'x', height, '- file:', overlayPath);
+    win.loadFile(overlayPath);
+    win.setAlwaysOnTop(true, 'screen-saver');
+
+    win.webContents.on('did-fail-load', (event, errorCode, errorDesc) => {
+      console.error('[BreakFlow] Overlay failed to load on display', index, ':', errorCode, errorDesc);
+    });
+    win.webContents.on('did-finish-load', () => {
+      console.log('[BreakFlow] Overlay loaded successfully on display', index);
+      // Only the primary overlay (display 0) should play sounds
+      if (index !== 0) {
+        win.webContents.send('set-primary', false);
+      }
+    });
+
+    win.on('closed', () => {
+      breakOverlayWindows = breakOverlayWindows.filter(w => w !== win);
+      if (win === breakOverlayWindow) {
+        breakOverlayWindow = null;
+      }
+    });
+
+    breakOverlayWindows.push(win);
+
+    // First display is the primary overlay (handles IPC, sounds, timer)
+    if (index === 0) {
+      breakOverlayWindow = win;
     }
   });
+}
 
-  breakOverlayWindow.loadFile(path.join(__dirname, '../renderer/pages/break-overlay.html'));
-  breakOverlayWindow.setAlwaysOnTop(true, 'screen-saver');
-
-  breakOverlayWindow.on('closed', () => {
-    breakOverlayWindow = null;
+// Close all break overlay windows
+function closeAllBreakOverlays() {
+  console.log('[BreakFlow] closeAllBreakOverlays: closing', breakOverlayWindows.length, 'window(s)');
+  breakOverlayWindows.forEach(win => {
+    if (win && !win.isDestroyed()) win.close();
   });
+  breakOverlayWindows = [];
+  breakOverlayWindow = null;
 }
 
 // Create floating widget window
@@ -243,16 +286,29 @@ function updateTrayMenu() {
   }
 
   const template = [
-    { label: stateLabel, enabled: false },
-    { type: 'separator' },
     {
-      label: timerPaused ? 'Resume' : 'Pause',
-      click: () => { timerPaused ? startTimer() : pauseTimer(); }
+      label: stateLabel,
+      submenu: [
+        {
+          label: 'Add 1 minute',
+          click: () => { currentTime += 60; updateTrayMenu(); sendTimerUpdate(); }
+        },
+        {
+          label: 'Add 5 minutes',
+          click: () => { currentTime += 300; updateTrayMenu(); sendTimerUpdate(); }
+        },
+        { type: 'separator' },
+        {
+          label: timerPaused ? 'Resume session' : 'Pause session',
+          accelerator: 'CommandOrControl+P',
+          click: () => { timerPaused ? startTimer() : pauseTimer(); }
+        },
+        ...(isWorkTime
+          ? [{ label: 'Skip to Break', accelerator: 'CommandOrControl+S', click: () => { skipToBreak(); } }]
+          : [{ label: 'Skip Break', accelerator: 'CommandOrControl+S', click: () => { skipBreak(); } }]
+        ),
+      ]
     },
-    ...(isWorkTime
-      ? [{ label: 'Skip to Break', click: () => { skipToBreak(); } }]
-      : [{ label: 'Skip Break', click: () => { skipBreak(); } }]
-    ),
     { type: 'separator' },
     { label: statusLine, enabled: false },
     { type: 'separator' },
@@ -261,7 +317,7 @@ function updateTrayMenu() {
       click: () => { toggleWidget(); }
     },
     {
-      label: 'Settings',
+      label: 'Settings...',
       click: () => {
         mainWindow.show();
         mainWindow.webContents.send('show-settings');
@@ -314,13 +370,15 @@ function getEffectiveBreakDuration() {
 }
 
 // Show countdown notification before break
-function showCountdownNotification(durationSeconds, callback) {
+function showCountdownNotification(durationSeconds) {
+  console.log('[BreakFlow] showCountdownNotification called, duration:', durationSeconds);
   if (countdownWindow) {
     countdownWindow.close();
     countdownWindow = null;
   }
 
   const { x, y } = screen.getCursorScreenPoint();
+  console.log('[BreakFlow] Cursor at', x, y);
   countdownWindow = new BrowserWindow({
     width: 280,
     height: 60,
@@ -339,21 +397,22 @@ function showCountdownNotification(durationSeconds, callback) {
     }
   });
 
-  countdownWindow.loadFile(path.join(__dirname, '../renderer/pages/cursor-notification.html'));
+  const countdownPath = path.join(__dirname, '../renderer/pages/cursor-notification.html');
+  console.log('[BreakFlow] Loading countdown from:', countdownPath);
+  countdownWindow.loadFile(countdownPath);
   countdownWindow.setAlwaysOnTop(true, 'screen-saver');
+
+  countdownWindow.webContents.on('did-fail-load', (event, errorCode, errorDesc) => {
+    console.error('[BreakFlow] Countdown failed to load:', errorCode, errorDesc);
+  });
+  countdownWindow.webContents.on('did-finish-load', () => {
+    console.log('[BreakFlow] Countdown loaded successfully');
+    countdownWindow.webContents.send('set-countdown', durationSeconds);
+  });
 
   countdownWindow.on('closed', () => {
     countdownWindow = null;
   });
-
-  // Close after duration + margin and trigger callback
-  setTimeout(() => {
-    if (countdownWindow) {
-      countdownWindow.close();
-      countdownWindow = null;
-    }
-    if (callback) callback();
-  }, (durationSeconds + 1) * 1000);
 }
 
 // Show overtime nudge
@@ -422,12 +481,23 @@ function startTimer() {
           showSimpleNotification('Break Coming Up', `Break starts in ${store.get('breakReminderMinutes')} minute(s)`);
         }
       }
+
+      // Show countdown notification when countdown seconds remain
+      if (isWorkTime && store.get('countdownEnabled')) {
+        const countdownSecs = store.get('countdownDuration') || 10;
+        if (currentTime === countdownSecs && !countdownWindow) {
+          console.log('[BreakFlow] Showing countdown with', countdownSecs, 'seconds left');
+          showCountdownNotification(countdownSecs);
+        }
+      }
     } else {
       clearInterval(timerInterval);
+      console.log('[BreakFlow] Timer reached 0. isWorkTime:', isWorkTime);
 
       if (isWorkTime) {
         // Check office hours
         if (!isWithinOfficeHours()) {
+          console.log('[BreakFlow] Outside office hours — delaying 5 min');
           currentTime = 5 * 60; // re-check in 5 min
           sendTimerUpdate();
           startTimer();
@@ -437,6 +507,7 @@ function startTimer() {
         // Check if focus app is active — delay break
         const status = detector ? detector.getStatus() : {};
         if (status.isFocusApp && store.get('focusAppBehavior') === 'delay') {
+          console.log('[BreakFlow] Focus app active — delaying break:', status.focusedApp);
           currentTime = 5 * 60;
           sendTimerUpdate();
           startTimer();
@@ -448,6 +519,7 @@ function startTimer() {
         if (store.get('dontBreakWhileTyping')) {
           const idleTime = powerMonitor.getSystemIdleTime();
           if (idleTime < 3) {
+            console.log('[BreakFlow] User typing — delaying 30s');
             // User is actively typing, delay 30s
             currentTime = 30;
             sendTimerUpdate();
@@ -456,24 +528,19 @@ function startTimer() {
           }
         }
 
-        // Show countdown before break
-        if (store.get('countdownEnabled')) {
-          const countdownSecs = store.get('countdownDuration') || 5;
-          showCountdownNotification(countdownSecs, () => {
-            triggerBreak();
-          });
-          return;
+        // Close countdown notification if still open
+        if (countdownWindow) {
+          countdownWindow.close();
+          countdownWindow = null;
         }
 
+        console.log('[BreakFlow] Triggering break');
         triggerBreak();
       } else {
         isWorkTime = true;
         currentTime = store.get('workDuration') * 60;
         notifyWorkStart();
-        if (breakOverlayWindow) {
-          breakOverlayWindow.close();
-          breakOverlayWindow = null;
-        }
+        closeAllBreakOverlays();
         startTimer();
       }
     }
@@ -481,13 +548,17 @@ function startTimer() {
 }
 
 function triggerBreak() {
+  console.log('[BreakFlow] triggerBreak() called');
   isWorkTime = false;
   completedSessions++;
   currentTime = getEffectiveBreakDuration();
   breakTime = currentTime;
+  console.log('[BreakFlow] Break duration:', currentTime, 'seconds');
   sendTimerUpdate();
   notifyBreakStart();
+  console.log('[BreakFlow] Creating break overlay...');
   createBreakOverlay();
+  console.log('[BreakFlow] Break overlay created. Windows:', breakOverlayWindows.length);
   startTimer();
 
   // Start overtime tracking for nudge
@@ -528,10 +599,7 @@ function skipToBreak() {
 function skipBreak() {
   clearInterval(timerInterval);
   closeOvertimeNudge();
-  if (breakOverlayWindow) {
-    breakOverlayWindow.close();
-    breakOverlayWindow = null;
-  }
+  closeAllBreakOverlays();
   isWorkTime = true;
   currentTime = store.get('workDuration') * 60;
   sendTimerUpdate();
@@ -539,10 +607,7 @@ function skipBreak() {
 }
 
 function delayBreak(minutes) {
-  if (breakOverlayWindow) {
-    breakOverlayWindow.close();
-    breakOverlayWindow = null;
-  }
+  closeAllBreakOverlays();
   clearInterval(timerInterval);
   isWorkTime = true;
   currentTime = minutes * 60;
@@ -787,7 +852,8 @@ app.whenReady().then(() => {
   createWindow();
   createTray();
   createWidgetWindow();
-  startTimer();
+  timerPaused = true;
+  sendTimerUpdate();
   initDetector();
   registerShortcuts();
   startPostureReminder();
@@ -843,10 +909,7 @@ ipcMain.on('skip-break', () => skipBreak());
 
 ipcMain.on('end-break', () => {
   closeOvertimeNudge();
-  if (breakOverlayWindow) {
-    breakOverlayWindow.close();
-    breakOverlayWindow = null;
-  }
+  closeAllBreakOverlays();
   isWorkTime = true;
   currentTime = store.get('workDuration') * 60;
   sendTimerUpdate();
@@ -900,7 +963,9 @@ ipcMain.on('save-settings', (event, newSettings) => {
 
   // Broadcast settings update
   if (mainWindow) mainWindow.webContents.send('settings-updated', store.store);
-  if (breakOverlayWindow) breakOverlayWindow.webContents.send('settings-updated', store.store);
+  breakOverlayWindows.forEach(win => {
+    if (win && !win.isDestroyed()) win.webContents.send('settings-updated', store.store);
+  });
 
   sendTimerUpdate();
 });
@@ -1037,6 +1102,13 @@ ipcMain.handle('get-prebuilt-automations', () => {
 });
 
 // Overtime nudge dismiss
+ipcMain.on('close-notification', () => {
+  if (countdownWindow) {
+    countdownWindow.close();
+    countdownWindow = null;
+  }
+});
+
 ipcMain.on('dismiss-overtime-nudge', () => {
   closeOvertimeNudge();
 });

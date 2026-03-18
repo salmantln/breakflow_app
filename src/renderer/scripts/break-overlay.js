@@ -14,6 +14,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   const endSound = new Audio();
   endSound.src = "../../../assets/sounds/break-end.mp3";
 
+  // Only the primary overlay plays sounds (non-primary displays get notified)
+  let isPrimaryOverlay = true;
+  window.electronAPI.onSetPrimary((primary) => {
+    isPrimaryOverlay = primary;
+  });
+
   // Motivational messages
   const messages = [
     "Rest your eyes and stretch",
@@ -129,7 +135,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function startBreakTimer() {
     breakTimer = totalBreakSeconds;
     updateDisplay();
-    if (settings.playSoundOnBreakStart !== false) {
+    if (isPrimaryOverlay && settings.playSoundOnBreakStart !== false) {
       startSound.play().catch(() => {});
     }
 
@@ -144,7 +150,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
 
       if (breakTimer <= 0) {
-        if (settings.playSoundOnBreakEnd !== false) {
+        if (isPrimaryOverlay && settings.playSoundOnBreakEnd !== false) {
           endSound.play().catch(() => {});
         }
         clearInterval(timerInterval);
@@ -194,7 +200,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   skipButton.addEventListener("click", () => {
     if (difficulty === 'hardcore') return;
     if (difficulty === 'balanced' && !skipUnlocked) return;
-    endSound.play().catch(() => {});
+    if (isPrimaryOverlay) endSound.play().catch(() => {});
     clearInterval(timerInterval);
     window.electronAPI.endBreak();
   });

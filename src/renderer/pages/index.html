@@ -75,30 +75,48 @@
       display: flex;
       flex-direction: column;
       box-shadow: 1px 0 0 rgba(255, 255, 255, 0.06), 2px 0 8px rgba(0, 0, 0, 0.15);
+      padding-top: 8px;
+      gap: 1px;
+    }
+
+    .nav-separator {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.06);
+      margin: 6px 16px;
     }
 
     .main-content {
       flex: 1;
       background: var(--bg-primary);
       position: relative;
+      overflow: hidden;
+    }
+
+    .main-content > div {
       overflow-y: auto;
+      height: 100%;
     }
 
     .nav-item {
-      padding: 8px 16px;
-      color: var(--text-secondary);
+      padding: 8px 12px;
+      color: var(--text-muted);
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 8px;
-      border-radius: 4px;
-      margin: 2px 8px;
-      transition: background-color 150ms cubic-bezier(0.2, 0, 0, 1);
+      gap: 10px;
+      border-radius: 8px;
+      margin: 1px 8px;
+      transition: background-color 150ms cubic-bezier(0.2, 0, 0, 1), color 150ms cubic-bezier(0.2, 0, 0, 1);
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      min-height: 36px;
     }
 
-    .nav-item:hover { background: rgba(255, 255, 255, 0.05); }
-    .nav-item.active { background: rgba(255, 255, 255, 0.08); }
-    .nav-item svg { width: 20px; height: 20px; }
+    .nav-item:hover { background: rgba(255, 255, 255, 0.05); color: var(--text-secondary); }
+    .nav-item:focus-visible { transition: none; outline: 2px solid var(--accent-color); outline-offset: -2px; }
+    .nav-item.active { background: rgba(255, 255, 255, 0.08); color: var(--text-primary); }
+    .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
 
     .content-container { padding: 20px; }
 
@@ -106,7 +124,9 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding-top: 40px;
+      justify-content: center;
+      padding-top: 0;
+      overflow: hidden !important;
     }
 
     .settings-view {
@@ -133,8 +153,7 @@
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.08);
     }
 
-    .main-content > div { display: none; }
-    .main-content > div.active { display: block; }
+    /* View visibility is controlled by JS inline styles */
 
     /* Titlebar */
     .titlebar {
@@ -227,12 +246,12 @@
 
     input[type="number"]:hover {
       box-shadow: 0 0 0 1px rgba(88, 101, 242, 0.5), 0 1px 3px rgba(0, 0, 0, 0.2);
-      background: #32353b;
+      background: var(--bg-tertiary);
     }
 
     input[type="number"]:focus {
       box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2);
-      background: #32353b;
+      background: var(--bg-tertiary);
     }
 
     input[type="text"] {
@@ -329,6 +348,11 @@
       font-size: 14px;
       padding: 4px 8px;
       margin: 0;
+      min-width: 32px;
+      min-height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .focus-app-item .remove-app:hover { color: var(--danger); }
@@ -451,6 +475,110 @@
       filter: invert(0.7);
     }
 
+    /* Day circles for office hours */
+    .day-circles {
+      display: flex;
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .day-circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 200ms cubic-bezier(0.23, 1, 0.32, 1);
+      padding: 0;
+      margin: 0;
+      font-family: inherit;
+    }
+    .day-circle:hover {
+      border-color: rgba(88, 101, 242, 0.5);
+      background: rgba(88, 101, 242, 0.1);
+    }
+    .day-circle.active {
+      background: var(--accent-color);
+      border-color: var(--accent-color);
+      color: white;
+    }
+
+    /* Smart Pause items */
+    .smart-pause-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    .smart-pause-item:last-child { border-bottom: none; }
+    .smart-pause-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .smart-pause-icon svg {
+      width: 18px;
+      height: 18px;
+      color: var(--text-secondary);
+    }
+    .smart-pause-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .smart-pause-info .sp-title {
+      font-size: 14px;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+    .smart-pause-info .sp-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .smart-pause-options-btn {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text-secondary);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 150ms;
+      margin: 0;
+      white-space: nowrap;
+    }
+    .smart-pause-options-btn:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+    .smart-pause-options-btn.expanded {
+      background: rgba(88, 101, 242, 0.1);
+      border-color: var(--accent-color);
+      color: var(--accent-color);
+    }
+    .smart-pause-spacer {
+      width: 72px;
+      flex-shrink: 0;
+    }
+    .smart-pause-options-panel {
+      display: none;
+      padding: 12px 0 12px 48px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    .smart-pause-options-panel.open { display: block; }
+
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         animation-duration: 0.01ms !important;
@@ -480,32 +608,55 @@
   <div class="app-container">
     <div class="sidebar">
       <div class="nav-item active" data-view="timer">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-          <path d="m12,1C5.935,1,1,5.935,1,12s4.935,11,11,11,11-4.935,11-11S18.065,1,12,1Zm4.2,15.4l-5.2-3.9v-7.5h2v6.5l4.4,3.3-1.2,1.6Z" />
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="13" r="9"/>
+          <polyline points="12 9 12 13 15.5 15"/>
+          <line x1="12" y1="2" x2="12" y2="4"/>
+          <line x1="9" y1="2" x2="15" y2="2"/>
         </svg>
         <span>Timer</span>
       </div>
       <div class="nav-item" data-view="settings">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-          <path d="m21.731,10.096l-1.28-.533c-.109-.378-.241-.745-.396-1.101-.218-.499-.211-1.066-.004-1.569l.176-.428c.317-.77.14-1.655-.449-2.244s-1.474-.766-2.244-.449l-1.278.526c-.57-.316-1.18-.566-1.819-.75l-.533-1.28c-.32-.769-1.071-1.269-1.904-1.269s-1.584.501-1.904,1.269l-.533,1.28c-.639.184-1.249.434-1.819.75l-1.278-.526c-.77-.317-1.655-.14-2.244.449s-.766,1.474-.449,2.244l.526,1.278c-.316.57-.566,1.18-.75,1.819l-1.28.533c-.769.32-1.269,1.071-1.269,1.904s.501,1.584,1.269,1.904l1.28.533c.184.639.434,1.249.75,1.819l-.526,1.278c-.317.77-.14,1.655.449,2.244s1.474.766,2.244.449l1.278-.526c.57.316,1.18.566,1.819.75l.533,1.28c.32.769,1.071,1.269,1.904,1.269s1.584-.501,1.904-1.269l.533-1.28c.639-.184,1.249-.434,1.819-.75l1.278.526c.77.317,1.655.14,2.244-.449s.766-1.474.449-2.244l-.526-1.278c.316-.57.566-1.18.75-1.819l1.28-.533c.769-.32,1.269-1.071,1.269-1.904s-.501-1.584-1.269-1.904Zm-9.731,5.904c-2.206,0-4-1.794-4-4s1.794-4,4-4,4,1.794,4,4-1.794,4-4,4Z" />
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
         </svg>
         <span>Settings</span>
       </div>
+      <div class="nav-item" data-view="smart-pause">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="10" y1="9" x2="10" y2="15"/>
+          <line x1="14" y1="9" x2="14" y2="15"/>
+        </svg>
+        <span>Smart Pause</span>
+      </div>
+      <div class="nav-separator"></div>
       <div class="nav-item" data-view="Customization">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-          <path fill-rule="evenodd" clip-rule="evenodd" d="M5.68915 1.61287C2.8317 3.61452 1 6.95059 1 10.7315C1 16.9588 5.98222 21.9259 12.0635 22C17.119 22 21.3685 18.5157 22.6873 13.8451C23.1269 12.14 23.6398 7.46954 20.1229 5.6903C17.5171 4.43097 15.1177 5.19804 13.1439 5.82903C11.3995 6.3867 9.98759 6.83808 9.05948 5.6903C8.71536 5.20283 8.90459 4.55183 9.10341 3.86787C9.3279 3.09557 9.56461 2.28125 9.05948 1.61287C8.3268 0.723252 6.7149 0.871522 5.68915 1.61287ZM6.5 13C5.67157 13 5 13.6716 5 14.5C5 15.3284 5.67157 16 6.5 16C7.32843 16 8 15.3284 8 14.5C8 13.6716 7.32843 13 6.5 13ZM4 9.5C4 8.67157 4.67157 8 5.5 8C6.32843 8 7 8.67157 7 9.5C7 10.3284 6.32843 11 5.5 11C4.67157 11 4 10.3284 4 9.5ZM10.5 16C9.67157 16 9 16.6716 9 17.5C9 18.3284 9.67157 19 10.5 19C11.3284 19 12 18.3284 12 17.5C12 16.6716 11.3284 16 10.5 16ZM19.5 11.5C19.5 13.1569 18.3807 14.5 17 14.5C15.6193 14.5 14.5 13.1569 14.5 11.5C14.5 9.84315 15.6193 8.5 17 8.5C18.3807 8.5 19.5 9.84315 19.5 11.5Z" />
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="13.5" cy="6.5" r="2.5"/>
+          <circle cx="17.5" cy="15.5" r="2.5"/>
+          <circle cx="8.5" cy="15.5" r="2.5"/>
+          <path d="M12 2v2.5"/>
+          <path d="M19.8 9l-2.2 1.3"/>
+          <path d="M6.4 9l2.2 1.3"/>
+          <path d="M12 22v-4"/>
+          <path d="M4.2 19.8l2.2-1.3"/>
+          <path d="M19.8 19.8l-2.2-1.3"/>
         </svg>
         <span>Customization</span>
       </div>
       <div class="nav-item" data-view="automations">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-          <path fill-rule="evenodd" clip-rule="evenodd" d="M14.8234 0.0866699L14.1452 9.04525H22.206L9.1766 23.9133L9.85477 14.9548H1.79402L14.8234 0.0866699Z" />
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
         </svg>
         <span>Automations</span>
       </div>
       <div class="nav-item" data-view="about">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-          <path d="m12,1C5.935,1,1,5.935,1,12s4.935,11,11,11,11-4.935,11-11S18.065,1,12,1Zm1,17h-2v-6h-2v-2h2.5c.827,0,1.5.673,1.5,1.5v6.5Zm-1-9.5c-.689,0-1.25-.561-1.25-1.25s.561-1.25,1.25-1.25,1.25.561,1.25,1.25-.561,1.25-1.25,1.25Z" />
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="16" x2="12" y2="12"/>
+          <line x1="12" y1="8" x2="12.01" y2="8"/>
         </svg>
         <span>About</span>
       </div>
@@ -564,21 +715,23 @@
         <div class="settings-section">
           <h3>Office Hours</h3>
           <div class="toggle-row">
-            <span class="toggle-label">Show breaks only during enabled days and hours</span>
+            <div>
+              <span class="toggle-label">Office Hours</span>
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">When enabled, BreakFlow will only show breaks during the set schedule</div>
+            </div>
             <label class="toggle">
               <input type="checkbox" id="officeHoursEnabled" />
               <span class="toggle-slider"></span>
             </label>
           </div>
           <div id="officeHoursConfig" style="display: none;">
-            <div class="setting-item">
-              <label>Scheduling preference</label>
-              <select id="officeHoursScheduleType">
-                <option value="same">Same schedule every day</option>
-                <option value="different">Different schedule for each day</option>
-              </select>
+            <div class="day-circles" id="dayCircles"></div>
+            <div class="schedule-row" style="margin-top: 8px;">
+              <span style="color: var(--text-muted); font-size: 13px;">From</span>
+              <input type="time" id="officeHoursStart" value="10:00" />
+              <span style="color: var(--text-muted); font-size: 13px;">to</span>
+              <input type="time" id="officeHoursEnd" value="19:00" />
             </div>
-            <div id="officeHoursSchedule" style="margin-top: 12px;"></div>
           </div>
         </div>
 
@@ -647,7 +800,7 @@
               </div>
               <div class="setting-item">
                 <label>Countdown duration (seconds)</label>
-                <input type="number" id="countdownDuration" value="5" min="3" max="30" />
+                <input type="number" id="countdownDuration" value="10" min="3" max="30" />
               </div>
             </div>
             <div style="flex: 1;">
@@ -667,85 +820,6 @@
                 </label>
               </div>
             </div>
-          </div>
-        </div>
-
-        <div class="settings-section">
-          <h3>Smart Detection</h3>
-          <div class="toggle-row">
-            <span class="toggle-label">Pause during meetings</span>
-            <label class="toggle">
-              <input type="checkbox" id="autoPauseMeetings" checked />
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <div class="toggle-row">
-            <span class="toggle-label">Pause during fullscreen apps</span>
-            <label class="toggle">
-              <input type="checkbox" id="autoPauseFullscreen" checked />
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <div class="toggle-row">
-            <span class="toggle-label">Pause during screen recording</span>
-            <label class="toggle">
-              <input type="checkbox" id="autoPauseRecording" checked />
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <div class="toggle-row">
-            <span class="toggle-label">Pause during video playback</span>
-            <label class="toggle">
-              <input type="checkbox" id="autoPauseVideoPlayback" />
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <div class="toggle-row">
-            <span class="toggle-label">Pause during calendar events</span>
-            <label class="toggle">
-              <input type="checkbox" id="autoPauseCalendarEvents" />
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <div class="setting-item" style="margin-top: 12px;">
-            <label>Cooldown after smart pause (minutes)</label>
-            <input type="number" id="smartPauseCooldown" value="2" min="0" max="10" />
-          </div>
-        </div>
-
-        <div class="settings-section">
-          <h3>Away Detection</h3>
-          <div class="setting-item">
-            <label>When you're away</label>
-            <select id="awayBehavior">
-              <option value="automatic">Automatic (pause & resume)</option>
-              <option value="pause">Pause only</option>
-              <option value="continue">Continue timer</option>
-              <option value="disabled">Disabled</option>
-            </select>
-          </div>
-          <div class="setting-item">
-            <label>Idle threshold (minutes)</label>
-            <input type="number" id="awayIdleThreshold" value="5" min="1" max="60" />
-          </div>
-        </div>
-
-        <div class="settings-section">
-          <h3>Focus Apps</h3>
-          <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 8px;">
-            Delay breaks when these apps are in the foreground
-          </p>
-          <div id="focusAppsList"></div>
-          <div class="add-app-row">
-            <input type="text" id="focusAppInput" placeholder="App name..." />
-            <button id="addFocusApp">Add</button>
-          </div>
-          <div class="setting-item" style="margin-top: 12px;">
-            <label>When focus app is active during break</label>
-            <select id="focusAppBehavior">
-              <option value="delay">Delay break by 5 min</option>
-              <option value="skip">Skip break</option>
-            </select>
           </div>
         </div>
 
@@ -775,6 +849,180 @@
             <div><span>Pause / Resume</span><kbd>Cmd+Shift+P</kbd></div>
             <div><span>Start Break</span><kbd>Cmd+Shift+B</kbd></div>
             <div><span>Skip Break</span><kbd>Cmd+Shift+S</kbd></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Smart Pause View -->
+      <div id="smart-pause-view" class="content-container settings-view">
+        <div class="settings-header">Smart Pause</div>
+
+        <div class="settings-section">
+          <h3>Automatically pause BreakFlow during</h3>
+
+          <!-- Meetings or Calls -->
+          <div class="smart-pause-item">
+            <div class="smart-pause-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+            </div>
+            <div class="smart-pause-info">
+              <div class="sp-title">Meetings or Calls</div>
+              <div class="sp-desc">Teams, Zoom, Meet, Slack, Discord</div>
+            </div>
+            <button class="smart-pause-options-btn" data-panel="sp-meetings-options">Options...</button>
+            <label class="toggle">
+              <input type="checkbox" id="sp-autoPauseMeetings" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="smart-pause-options-panel" id="sp-meetings-options">
+            <div class="setting-item">
+              <label style="font-size: 13px; color: var(--text-secondary);">Excluded apps (won't trigger pause)</label>
+              <div id="sp-excludedAppsList" style="margin: 8px 0;"></div>
+              <div class="add-app-row">
+                <input type="text" id="sp-excludedAppInput" placeholder="App name..." />
+                <button id="sp-addExcludedApp">Add</button>
+              </div>
+            </div>
+            <div class="toggle-row" style="margin-top: 12px;">
+              <span class="toggle-label" style="font-size: 13px;">Show notification when meeting detected</span>
+              <label class="toggle">
+                <input type="checkbox" id="sp-meetingNotification" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Video Playback -->
+          <div class="smart-pause-item">
+            <div class="smart-pause-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+            <div class="smart-pause-info">
+              <div class="sp-title">Video Playback</div>
+              <div class="sp-desc">Pause when watching videos</div>
+            </div>
+            <div class="smart-pause-spacer"></div>
+            <label class="toggle">
+              <input type="checkbox" id="sp-autoPauseVideoPlayback" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <!-- Calendar Events -->
+          <div class="smart-pause-item">
+            <div class="smart-pause-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>
+            </div>
+            <div class="smart-pause-info">
+              <div class="sp-title">Calendar Events</div>
+              <div class="sp-desc">Pause during scheduled events</div>
+            </div>
+            <div class="smart-pause-spacer"></div>
+            <label class="toggle">
+              <input type="checkbox" id="sp-autoPauseCalendarEvents" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <!-- Deep Focus Apps -->
+          <div class="smart-pause-item">
+            <div class="smart-pause-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+            </div>
+            <div class="smart-pause-info">
+              <div class="sp-title">Deep Focus Apps</div>
+              <div class="sp-desc">Delay or skip breaks for focus apps</div>
+            </div>
+            <button class="smart-pause-options-btn" data-panel="sp-focus-options">Options...</button>
+            <label class="toggle" style="visibility: hidden; width: 44px;">
+              <input type="checkbox" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="smart-pause-options-panel" id="sp-focus-options">
+            <div class="setting-item">
+              <label style="font-size: 13px; color: var(--text-secondary);">Focus apps list</label>
+              <div id="sp-focusAppsList" style="margin: 8px 0;"></div>
+              <div class="add-app-row">
+                <input type="text" id="sp-focusAppInput" placeholder="App name..." />
+                <button id="sp-addFocusApp">Add</button>
+              </div>
+            </div>
+            <div class="setting-item" style="margin-top: 12px;">
+              <label style="font-size: 13px; color: var(--text-secondary);">When focus app is active during break</label>
+              <select id="sp-focusAppBehavior">
+                <option value="delay">Delay break by 5 min</option>
+                <option value="skip">Skip break</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Gaming / Fullscreen -->
+          <div class="smart-pause-item">
+            <div class="smart-pause-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+            </div>
+            <div class="smart-pause-info">
+              <div class="sp-title">Gaming</div>
+              <div class="sp-desc">Pause during fullscreen apps and games</div>
+            </div>
+            <div class="smart-pause-spacer"></div>
+            <label class="toggle">
+              <input type="checkbox" id="sp-autoPauseFullscreen" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <!-- Screen Recording -->
+          <div class="smart-pause-item">
+            <div class="smart-pause-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+            </div>
+            <div class="smart-pause-info">
+              <div class="sp-title">Screen Recording or Sharing</div>
+              <div class="sp-desc">Pause when recording or sharing screen</div>
+            </div>
+            <div class="smart-pause-spacer"></div>
+            <label class="toggle">
+              <input type="checkbox" id="sp-autoPauseRecording" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Cooldown</h3>
+          <div class="setting-item">
+            <label style="color: var(--text-secondary); font-size: 14px;">Cooldown after smart pause ends</label>
+            <select id="sp-smartPauseCooldown" style="margin-top: 8px;">
+              <option value="0">No cooldown</option>
+              <option value="1">1 minute</option>
+              <option value="2">2 minutes</option>
+              <option value="3">3 minutes</option>
+              <option value="5">5 minutes</option>
+              <option value="10">10 minutes</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>When You're Away</h3>
+          <div class="setting-item">
+            <label style="color: var(--text-secondary); font-size: 14px;">Behavior when you step away</label>
+            <select id="sp-awayBehavior" style="margin-top: 8px;">
+              <option value="automatic">Automatic (pause & resume)</option>
+              <option value="pause">Pause only</option>
+              <option value="continue">Continue timer</option>
+              <option value="disabled">Disabled</option>
+            </select>
+            <p id="sp-awayDesc" style="color: var(--text-muted); font-size: 12px; margin-top: 6px;">
+              Automatically pause when idle and resume when you return
+            </p>
+          </div>
+          <div class="setting-item" style="margin-top: 8px;">
+            <label style="color: var(--text-secondary); font-size: 14px;">Idle threshold (minutes)</label>
+            <input type="number" id="sp-awayIdleThreshold" value="5" min="1" max="60" />
           </div>
         </div>
       </div>

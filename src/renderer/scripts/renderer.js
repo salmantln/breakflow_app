@@ -181,33 +181,169 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (breakDurationInput) {
     breakDurationInput.value = settings.breakDuration || 5;
     breakDurationInput.addEventListener("change", (e) => {
-      const val = parseInt(e.target.value) || 5;
+      const val = parseInt(e.target.value) || 10;
       window.electronAPI.saveSettings({ breakDuration: val });
     });
   }
 
-  // Auto-pause toggles
-  const autoPauseMeetings = document.getElementById("autoPauseMeetings");
-  if (autoPauseMeetings) {
-    autoPauseMeetings.checked = settings.autoPauseMeetings !== false;
-    autoPauseMeetings.addEventListener("change", (e) => {
-      window.electronAPI.saveSettings({ autoPauseMeetings: e.target.checked });
+  // Smart Pause view toggles
+  const spToggles = {
+    'sp-autoPauseMeetings': { key: 'autoPauseMeetings', default: true },
+    'sp-autoPauseFullscreen': { key: 'autoPauseFullscreen', default: true },
+    'sp-autoPauseRecording': { key: 'autoPauseRecording', default: true },
+    'sp-autoPauseVideoPlayback': { key: 'autoPauseVideoPlayback', default: false },
+    'sp-autoPauseCalendarEvents': { key: 'autoPauseCalendarEvents', default: false },
+    'sp-meetingNotification': { key: 'meetingNotification', default: true },
+  };
+  Object.entries(spToggles).forEach(([id, { key, default: def }]) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.checked = def ? settings[key] !== false : (settings[key] || false);
+      el.addEventListener("change", (e) => {
+        window.electronAPI.saveSettings({ [key]: e.target.checked });
+      });
+    }
+  });
+
+  // Smart Pause cooldown dropdown
+  const spCooldown = document.getElementById("sp-smartPauseCooldown");
+  if (spCooldown) {
+    spCooldown.value = String(settings.smartPauseCooldown != null ? settings.smartPauseCooldown : 2);
+    spCooldown.addEventListener("change", (e) => {
+      window.electronAPI.saveSettings({ smartPauseCooldown: parseInt(e.target.value) || 0 });
     });
   }
 
-  const autoPauseFullscreen = document.getElementById("autoPauseFullscreen");
-  if (autoPauseFullscreen) {
-    autoPauseFullscreen.checked = settings.autoPauseFullscreen !== false;
-    autoPauseFullscreen.addEventListener("change", (e) => {
-      window.electronAPI.saveSettings({ autoPauseFullscreen: e.target.checked });
+  // Smart Pause away behavior
+  const spAwayBehavior = document.getElementById("sp-awayBehavior");
+  const spAwayDesc = document.getElementById("sp-awayDesc");
+  const awayDescriptions = {
+    automatic: 'Automatically pause when idle and resume when you return',
+    pause: 'Pause the timer when idle, but don\'t auto-resume',
+    continue: 'Keep the timer running even when away',
+    disabled: 'Away detection is disabled',
+  };
+  if (spAwayBehavior) {
+    spAwayBehavior.value = settings.awayBehavior || 'automatic';
+    if (spAwayDesc) spAwayDesc.textContent = awayDescriptions[spAwayBehavior.value] || '';
+    spAwayBehavior.addEventListener("change", (e) => {
+      window.electronAPI.saveSettings({ awayBehavior: e.target.value });
+      if (spAwayDesc) spAwayDesc.textContent = awayDescriptions[e.target.value] || '';
     });
   }
 
-  const autoPauseRecording = document.getElementById("autoPauseRecording");
-  if (autoPauseRecording) {
-    autoPauseRecording.checked = settings.autoPauseRecording !== false;
-    autoPauseRecording.addEventListener("change", (e) => {
-      window.electronAPI.saveSettings({ autoPauseRecording: e.target.checked });
+  // Smart Pause idle threshold
+  const spIdleThreshold = document.getElementById("sp-awayIdleThreshold");
+  if (spIdleThreshold) {
+    spIdleThreshold.value = settings.awayIdleThreshold || 5;
+    spIdleThreshold.addEventListener("change", (e) => {
+      window.electronAPI.saveSettings({ awayIdleThreshold: parseInt(e.target.value) || 10 });
+    });
+  }
+
+  // Smart Pause Options buttons
+  document.querySelectorAll('.smart-pause-options-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const panelId = btn.dataset.panel;
+      const panel = document.getElementById(panelId);
+      if (panel) {
+        const isOpen = panel.classList.contains('open');
+        // Close all panels first
+        document.querySelectorAll('.smart-pause-options-panel').forEach(p => p.classList.remove('open'));
+        document.querySelectorAll('.smart-pause-options-btn').forEach(b => b.classList.remove('expanded'));
+        if (!isOpen) {
+          panel.classList.add('open');
+          btn.classList.add('expanded');
+        }
+      }
+    });
+  });
+
+  // Smart Pause — Focus apps list
+  const spFocusAppsList = document.getElementById("sp-focusAppsList");
+  const spAddFocusAppBtn = document.getElementById("sp-addFocusApp");
+  const spFocusAppInput = document.getElementById("sp-focusAppInput");
+  const spFocusAppBehavior = document.getElementById("sp-focusAppBehavior");
+
+  function renderSpFocusApps(apps) {
+    if (!spFocusAppsList) return;
+    spFocusAppsList.innerHTML = '';
+    apps.forEach((app, i) => {
+      const item = document.createElement('div');
+      item.className = 'focus-app-item';
+      item.innerHTML = `<span>${app}</span><button class="remove-app" data-index="${i}">x</button>`;
+      spFocusAppsList.appendChild(item);
+    });
+    spFocusAppsList.querySelectorAll('.remove-app').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const updated = [...(settings.focusApps || [])];
+        updated.splice(parseInt(btn.dataset.index), 1);
+        settings.focusApps = updated;
+        window.electronAPI.saveSettings({ focusApps: updated });
+        renderSpFocusApps(updated);
+      });
+    });
+  }
+
+  if (spFocusAppsList) renderSpFocusApps(settings.focusApps || []);
+
+  if (spFocusAppBehavior) {
+    spFocusAppBehavior.value = settings.focusAppBehavior || 'delay';
+    spFocusAppBehavior.addEventListener("change", (e) => {
+      window.electronAPI.saveSettings({ focusAppBehavior: e.target.value });
+    });
+  }
+
+  if (spAddFocusAppBtn && spFocusAppInput) {
+    spAddFocusAppBtn.addEventListener("click", () => {
+      const appName = spFocusAppInput.value.trim();
+      if (appName) {
+        const apps = [...(settings.focusApps || []), appName];
+        settings.focusApps = apps;
+        window.electronAPI.saveSettings({ focusApps: apps });
+        renderSpFocusApps(apps);
+        spFocusAppInput.value = '';
+      }
+    });
+  }
+
+  // Smart Pause — Meeting excluded apps list
+  const spExcludedAppsList = document.getElementById("sp-excludedAppsList");
+  const spAddExcludedAppBtn = document.getElementById("sp-addExcludedApp");
+  const spExcludedAppInput = document.getElementById("sp-excludedAppInput");
+
+  function renderExcludedApps(apps) {
+    if (!spExcludedAppsList) return;
+    spExcludedAppsList.innerHTML = '';
+    apps.forEach((app, i) => {
+      const item = document.createElement('div');
+      item.className = 'focus-app-item';
+      item.innerHTML = `<span>${app}</span><button class="remove-app" data-index="${i}">x</button>`;
+      spExcludedAppsList.appendChild(item);
+    });
+    spExcludedAppsList.querySelectorAll('.remove-app').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const updated = [...(settings.meetingExcludedApps || [])];
+        updated.splice(parseInt(btn.dataset.index), 1);
+        settings.meetingExcludedApps = updated;
+        window.electronAPI.saveSettings({ meetingExcludedApps: updated });
+        renderExcludedApps(updated);
+      });
+    });
+  }
+
+  if (spExcludedAppsList) renderExcludedApps(settings.meetingExcludedApps || []);
+
+  if (spAddExcludedAppBtn && spExcludedAppInput) {
+    spAddExcludedAppBtn.addEventListener("click", () => {
+      const appName = spExcludedAppInput.value.trim();
+      if (appName) {
+        const apps = [...(settings.meetingExcludedApps || []), appName];
+        settings.meetingExcludedApps = apps;
+        window.electronAPI.saveSettings({ meetingExcludedApps: apps });
+        renderExcludedApps(apps);
+        spExcludedAppInput.value = '';
+      }
     });
   }
 
@@ -254,7 +390,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // Office hours
+  // Office hours — day circle design
   const officeHoursEnabled = document.getElementById("officeHoursEnabled");
   const officeHoursConfig = document.getElementById("officeHoursConfig");
   if (officeHoursEnabled) {
@@ -265,86 +401,61 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (officeHoursConfig) officeHoursConfig.style.display = e.target.checked ? 'block' : 'none';
     });
   }
-  const officeHoursScheduleType = document.getElementById("officeHoursScheduleType");
-  if (officeHoursScheduleType) {
-    officeHoursScheduleType.value = settings.officeHoursScheduleType || 'same';
-    officeHoursScheduleType.addEventListener("change", (e) => {
-      window.electronAPI.saveSettings({ officeHoursScheduleType: e.target.value });
-      renderOfficeHoursSchedule();
-    });
-  }
 
-  const dayLabels = { mon: 'Monday', tue: 'Tuesday', wed: 'Wednesday', thu: 'Thursday', fri: 'Friday', sat: 'Saturday', sun: 'Sunday' };
   const dayOrder = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+  const dayLetters = { mon: 'M', tue: 'T', wed: 'W', thu: 'T', fri: 'F', sat: 'S', sun: 'S' };
 
-  function renderOfficeHoursSchedule() {
-    const container = document.getElementById("officeHoursSchedule");
+  function renderDayCircles() {
+    const container = document.getElementById("dayCircles");
     if (!container) return;
     container.innerHTML = '';
     const schedule = settings.officeHoursSchedule || {};
-    const scheduleType = settings.officeHoursScheduleType || 'same';
 
     dayOrder.forEach((day) => {
       const dayData = schedule[day] || { enabled: false, start: '10:00', end: '19:00' };
-      const row = document.createElement('div');
-      row.className = 'schedule-row';
-
-      // For "same" mode, only show toggle for enabled/disabled, times from first enabled day
-      if (scheduleType === 'same' && day !== 'mon') {
-        // Show day name + toggle only (times follow Monday)
-      }
-
-      row.innerHTML = `
-        <label class="toggle" style="width: 36px; height: 20px;">
-          <input type="checkbox" class="day-toggle" data-day="${day}" ${dayData.enabled ? 'checked' : ''} />
-          <span class="toggle-slider" style="border-radius: 10px;"></span>
-        </label>
-        <span class="day-name" style="${!dayData.enabled ? 'opacity: 0.5;' : ''}">${dayLabels[day]}</span>
-        ${scheduleType === 'different' || day === 'mon' ? `
-          <input type="time" class="day-start" data-day="${day}" value="${dayData.start}" ${!dayData.enabled ? 'disabled' : ''} />
-          <span>to</span>
-          <input type="time" class="day-end" data-day="${day}" value="${dayData.end}" ${!dayData.enabled ? 'disabled' : ''} />
-        ` : ''}
-      `;
-      container.appendChild(row);
-    });
-
-    container.querySelectorAll('.day-toggle').forEach(toggle => {
-      toggle.addEventListener('change', () => {
-        const day = toggle.dataset.day;
+      const circle = document.createElement('button');
+      circle.className = 'day-circle' + (dayData.enabled ? ' active' : '');
+      circle.textContent = dayLetters[day];
+      circle.title = day.charAt(0).toUpperCase() + day.slice(1);
+      circle.addEventListener('click', () => {
         const s = settings.officeHoursSchedule || {};
         if (!s[day]) s[day] = { enabled: false, start: '10:00', end: '19:00' };
-        s[day].enabled = toggle.checked;
+        s[day].enabled = !s[day].enabled;
         settings.officeHoursSchedule = s;
         window.electronAPI.saveSettings({ officeHoursSchedule: s });
-        renderOfficeHoursSchedule();
+        renderDayCircles();
       });
-    });
-
-    container.querySelectorAll('.day-start, .day-end').forEach(input => {
-      input.addEventListener('change', () => {
-        const day = input.dataset.day;
-        const s = settings.officeHoursSchedule || {};
-        if (!s[day]) s[day] = { enabled: true, start: '10:00', end: '19:00' };
-        if (input.classList.contains('day-start')) {
-          s[day].start = input.value;
-          // If same schedule, apply to all enabled days
-          if ((settings.officeHoursScheduleType || 'same') === 'same') {
-            dayOrder.forEach(d => { if (s[d]) s[d].start = input.value; });
-          }
-        } else {
-          s[day].end = input.value;
-          if ((settings.officeHoursScheduleType || 'same') === 'same') {
-            dayOrder.forEach(d => { if (s[d]) s[d].end = input.value; });
-          }
-        }
-        settings.officeHoursSchedule = s;
-        window.electronAPI.saveSettings({ officeHoursSchedule: s });
-      });
+      container.appendChild(circle);
     });
   }
 
-  renderOfficeHoursSchedule();
+  renderDayCircles();
+
+  // Unified time pickers for office hours
+  const officeHoursStart = document.getElementById("officeHoursStart");
+  const officeHoursEnd = document.getElementById("officeHoursEnd");
+  const schedule = settings.officeHoursSchedule || {};
+  // Get time from first enabled day or default
+  const firstEnabled = dayOrder.find(d => schedule[d]?.enabled) || 'mon';
+  if (officeHoursStart) officeHoursStart.value = (schedule[firstEnabled] || {}).start || '10:00';
+  if (officeHoursEnd) officeHoursEnd.value = (schedule[firstEnabled] || {}).end || '19:00';
+
+  function updateAllDayTimes() {
+    const s = settings.officeHoursSchedule || {};
+    const startVal = officeHoursStart ? officeHoursStart.value : '10:00';
+    const endVal = officeHoursEnd ? officeHoursEnd.value : '19:00';
+    dayOrder.forEach(d => {
+      if (s[d]) {
+        s[d].start = startVal;
+        s[d].end = endVal;
+      }
+    });
+    settings.officeHoursSchedule = s;
+    window.electronAPI.saveSettings({ officeHoursSchedule: s });
+  }
+
+  if (officeHoursStart) officeHoursStart.addEventListener("change", updateAllDayTimes);
+  if (officeHoursEnd) officeHoursEnd.addEventListener("change", updateAllDayTimes);
 
   // Break skip difficulty
   document.querySelectorAll('.skip-difficulty-btn').forEach(btn => {
@@ -410,9 +521,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   const countdownDuration = document.getElementById("countdownDuration");
   if (countdownDuration) {
-    countdownDuration.value = settings.countdownDuration || 5;
+    countdownDuration.value = settings.countdownDuration || 10;
     countdownDuration.addEventListener("change", (e) => {
-      window.electronAPI.saveSettings({ countdownDuration: parseInt(e.target.value) || 5 });
+      window.electronAPI.saveSettings({ countdownDuration: parseInt(e.target.value) || 10 });
     });
   }
   const overtimeNudgeEnabled = document.getElementById("overtimeNudgeEnabled");
@@ -472,60 +583,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // Focus apps
-  const focusAppsList = document.getElementById("focusAppsList");
-  const addFocusAppBtn = document.getElementById("addFocusApp");
-  const focusAppInput = document.getElementById("focusAppInput");
-  const focusAppBehavior = document.getElementById("focusAppBehavior");
-
-  if (focusAppsList) {
-    renderFocusApps(settings.focusApps || []);
-  }
-
-  if (focusAppBehavior) {
-    focusAppBehavior.value = settings.focusAppBehavior || 'delay';
-    focusAppBehavior.addEventListener("change", (e) => {
-      window.electronAPI.saveSettings({ focusAppBehavior: e.target.value });
-    });
-  }
-
-  if (addFocusAppBtn && focusAppInput) {
-    addFocusAppBtn.addEventListener("click", () => {
-      const appName = focusAppInput.value.trim();
-      if (appName) {
-        const apps = [...(settings.focusApps || []), appName];
-        settings.focusApps = apps;
-        window.electronAPI.saveSettings({ focusApps: apps });
-        renderFocusApps(apps);
-        focusAppInput.value = '';
-      }
-    });
-  }
-
-  function renderFocusApps(apps) {
-    if (!focusAppsList) return;
-    focusAppsList.innerHTML = '';
-    apps.forEach((app, i) => {
-      const item = document.createElement('div');
-      item.className = 'focus-app-item';
-      item.innerHTML = `
-        <span>${app}</span>
-        <button class="remove-app" data-index="${i}">x</button>
-      `;
-      focusAppsList.appendChild(item);
-    });
-
-    focusAppsList.querySelectorAll('.remove-app').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const idx = parseInt(btn.dataset.index);
-        const updated = [...(settings.focusApps || [])];
-        updated.splice(idx, 1);
-        settings.focusApps = updated;
-        window.electronAPI.saveSettings({ focusApps: updated });
-        renderFocusApps(updated);
-      });
-    });
-  }
+  // (Focus apps moved to Smart Pause view)
 
   // Upload custom sound
   const uploadSoundBtn = document.getElementById("uploadSound");
@@ -548,52 +606,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (previewSoundBtn) {
     previewSoundBtn.addEventListener("click", () => {
       const audio = new Audio("../../../assets/sounds/break-start.mp3");
-      audio.volume = (settings.soundVolume != null ? settings.soundVolume : 80) / 100;
+      audio.volume = (settings.soundVolume != null ? settings.soundVolume : 30) / 100;
+      previewSoundBtn.textContent = "Playing...";
       audio.play().catch(() => {});
+      audio.addEventListener("ended", () => {
+        previewSoundBtn.textContent = "Preview Sound";
+      });
     });
   }
 
-  // Phase 1: Cooldown + Away detection settings
-  const smartPauseCooldown = document.getElementById("smartPauseCooldown");
-  if (smartPauseCooldown) {
-    smartPauseCooldown.value = settings.smartPauseCooldown != null ? settings.smartPauseCooldown : 2;
-    smartPauseCooldown.addEventListener("change", (e) => {
-      window.electronAPI.saveSettings({ smartPauseCooldown: parseInt(e.target.value) || 0 });
-    });
-  }
-
-  const awayBehavior = document.getElementById("awayBehavior");
-  if (awayBehavior) {
-    awayBehavior.value = settings.awayBehavior || 'automatic';
-    awayBehavior.addEventListener("change", (e) => {
-      window.electronAPI.saveSettings({ awayBehavior: e.target.value });
-    });
-  }
-
-  const awayIdleThreshold = document.getElementById("awayIdleThreshold");
-  if (awayIdleThreshold) {
-    awayIdleThreshold.value = settings.awayIdleThreshold || 5;
-    awayIdleThreshold.addEventListener("change", (e) => {
-      window.electronAPI.saveSettings({ awayIdleThreshold: parseInt(e.target.value) || 5 });
-    });
-  }
-
-  // Phase 2: Video playback + Calendar toggles
-  const autoPauseVideoPlayback = document.getElementById("autoPauseVideoPlayback");
-  if (autoPauseVideoPlayback) {
-    autoPauseVideoPlayback.checked = settings.autoPauseVideoPlayback || false;
-    autoPauseVideoPlayback.addEventListener("change", (e) => {
-      window.electronAPI.saveSettings({ autoPauseVideoPlayback: e.target.checked });
-    });
-  }
-
-  const autoPauseCalendarEvents = document.getElementById("autoPauseCalendarEvents");
-  if (autoPauseCalendarEvents) {
-    autoPauseCalendarEvents.checked = settings.autoPauseCalendarEvents || false;
-    autoPauseCalendarEvents.addEventListener("change", (e) => {
-      window.electronAPI.saveSettings({ autoPauseCalendarEvents: e.target.checked });
-    });
-  }
+  // (Cooldown, away detection, video/calendar toggles moved to Smart Pause view)
 
   // Phase 3: Sound volume + toggles
   const soundVolume = document.getElementById("soundVolume");

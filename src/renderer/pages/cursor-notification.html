@@ -78,35 +78,47 @@
   <body>
     <div class="notification">
       <div class="icon">😴</div>
-      <span>Starting break in <span id="countdown">3</span></span>
+      <span>Starting break in <span id="countdown">10</span></span>
     </div>
 
     <script>
-      let count = 5;
+      let count = 10;
+      let interval = null;
       const countdownElement = document.getElementById("countdown");
       const notification = document.querySelector(".notification");
 
-      const interval = setInterval(() => {
-        count--;
+      function startCountdown() {
         countdownElement.textContent = count;
+        interval = setInterval(() => {
+          count--;
+          countdownElement.textContent = count;
 
-        if (count <= 0) {
-          // clearInterval(interval);
-          // Add fade out animation
-          notification.classList.add("fade-out");
-          // Close the window after animation
-          setTimeout(() => {
-            window.electronAPI.closeNotification();
-          }, 300);
-        }
-      }, 1000);
+          if (count <= 0) {
+            clearInterval(interval);
+            notification.classList.add("fade-out");
+            setTimeout(() => {
+              window.electronAPI.closeNotification();
+            }, 300);
+          }
+        }, 1000);
+      }
+
+      // Receive countdown duration from main process
+      window.electronAPI.onSetCountdown((seconds) => {
+        count = seconds;
+        countdownElement.textContent = count;
+        startCountdown();
+      });
+
+      // Fallback: start after a short delay if no message received
+      setTimeout(() => {
+        if (!interval) startCountdown();
+      }, 500);
 
       // Cleanup on window close
       window.addEventListener("unload", () => {
-        clearInterval(interval);
+        if (interval) clearInterval(interval);
       });
-
-      
     </script>
   </body>
 </html>

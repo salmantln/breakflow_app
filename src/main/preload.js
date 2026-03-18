@@ -48,6 +48,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
   toggleWidget: () => ipcRenderer.send("toggle-widget"),
 
   // Notifications
+  closeNotification: () => ipcRenderer.send("close-notification"),
+  onSetCountdown: (callback) => ipcRenderer.on("set-countdown", (_event, seconds) => callback(seconds)),
   notifyBreaktime: () => ipcRenderer.send("notify-breaktime"),
   playNotification: () => ipcRenderer.send("play-notification"),
   onTimeSync: (callback) => ipcRenderer.on("sync-time", callback),
@@ -83,6 +85,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
 
   // Platform
   platform: process.platform,
+
+  // Primary overlay flag (only primary plays sounds)
+  onSetPrimary: (callback) => ipcRenderer.on("set-primary", (_event, isPrimary) => callback(isPrimary)),
 
   // Logging
   log: (msg) => console.log(msg),
