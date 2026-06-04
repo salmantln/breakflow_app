@@ -44,8 +44,6 @@ src/
       renderer.js          # Main window UI controller
       break-overlay.js     # Break overlay logic
       settings.js          # Settings page logic
-    styles/
-      styles.css           # Shared styles
 assets/
   icons/                   # App icons (all sizes, icns, ico, png)
   sounds/                  # Audio files (break-start.mp3, break-end.mp3)
